@@ -1,0 +1,80 @@
+{
+  "skill_name": "vibe-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Crie um portfolio online para um escritorio de arquitetura premium. Estilo minimalista com muito whitespace.",
+      "expected_output": "Portfolio with design tokens, semantic HTML, Tailwind styling, GSAP animations, following 6-phase pipeline",
+      "files": [],
+      "expectations": [
+        "Asks about or confirms the design vibe/style before writing code",
+        "Generates CSS custom properties or Tailwind config with design tokens BEFORE writing HTML",
+        "Uses multiples of 8px for spacing (padding, margin, gap values)",
+        "Includes GSAP ScrollTrigger for scroll-based reveal animations",
+        "Has responsive styles for at least 3 breakpoints (mobile, tablet, desktop)",
+        "Uses semantic HTML elements (header, main, section, footer) with aria-labels or alt texts",
+        "Follows the 6-phase pipeline order: curadoria, tokens, HTML structure, styling, animations, validation"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Crie uma landing page para um SaaS de analytics com design neon/cyberpunk e animacoes impressionantes.",
+      "expected_output": "Landing page with neon design tokens, dark bg, glow effects, GSAP animations, Canvas/Three.js background",
+      "files": [],
+      "expectations": [
+        "Design tokens include neon/vibrant colors with dark background palette",
+        "Uses text-shadow with spread or box-shadow glow effects for neon aesthetic",
+        "Includes Canvas API or Three.js for animated premium background (particles, gradients)",
+        "Uses GSAP ScrollTrigger for scroll-based reveal animations",
+        "Built mobile-first with responsive breakpoints",
+        "Design tokens generated before HTML structure",
+        "Follows the 6-phase pipeline order"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Crie uma pagina de produto para um relogio de luxo. Estilo editorial premium com glassmorphism sutil.",
+      "expected_output": "Product page with glassmorphism tokens, serif typography, product gallery, WCAG AA compliance",
+      "files": [],
+      "expectations": [
+        "Design tokens include glassmorphism properties (backdrop-filter, glass-bg, glass-border)",
+        "Uses backdrop-filter: blur() with rgba transparent backgrounds",
+        "Uses serif or display font for headings/titles",
+        "Product gallery section with hover state interactions",
+        "Consistent 8px-based spacing system throughout",
+        "Addresses WCAG AA requirements (contrast, focus states, alt text)",
+        "Follows the 6-phase pipeline order"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Crie um blog minimalista editorial com foco em tipografia e whitespace generoso.",
+      "expected_output": "Blog with typography-focused design, asymmetric grid, generous whitespace, reduced-motion support",
+      "files": [],
+      "expectations": [
+        "Typography is the main visual element with large/varied font sizes and weights",
+        "Uses asymmetric or editorial grid layout",
+        "Generous whitespace with large padding/margin values",
+        "Serif font for headings or titles",
+        "Design tokens defined before HTML structure",
+        "Respects prefers-reduced-motion media query",
+        "Follows the 6-phase pipeline order"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Crie um dashboard de analytics com design glassmorphism em dark mode. Cards translucidos com graficos.",
+      "expected_output": "Dashboard with dark glassmorphism theme, translucent cards, CSS Grid layout, GSAP animations",
+      "files": [],
+      "expectations": [
+        "Dark theme with glassmorphism effect applied to cards",
+        "Cards use backdrop-filter: blur() with translucent rgba backgrounds",
+        "Design tokens configured for dark theme",
+        "Uses CSS Grid for responsive dashboard layout",
+        "Cards have hover micro-interactions (scale, shadow, glow transitions)",
+        "GSAP used for data or transition animations",
+        "Follows the 6-phase pipeline order"
+      ]
+    }
+  ]
+}

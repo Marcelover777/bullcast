@@ -1,0 +1,32 @@
+[
+  {
+    "eval_id": 1,
+    "eval_name": "schema-ecommerce",
+    "prompt": "Crie um Prisma schema para um e-commerce: users, products, orders, order_items, categories.",
+    "expected_behavior": ["5 models", "Relacoes corretas", "Indexes", "createdAt/updatedAt", "Enums"]
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "migration-workflow",
+    "prompt": "Crie a migration inicial para um app de tarefas e explique o workflow de migrations.",
+    "expected_behavior": ["Prisma schema", "Comando migrate", "Explicacao do workflow", "Seed data"]
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "rls-supabase",
+    "prompt": "Configure Row Level Security no Supabase para um app multi-tenant.",
+    "expected_behavior": ["RLS habilitado", "Policies por tabela", "Tenant isolation", "Admin override"]
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "performance-indexes",
+    "prompt": "Analise este schema e sugira indexes para otimizar queries comuns de um dashboard.",
+    "expected_behavior": ["Indexes em FKs", "Composite indexes", "Justificativa", "Trade-offs"]
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "seed-data-completo",
+    "prompt": "Crie seed data para popular um app de blog com 5 users, 20 posts e 10 tags.",
+    "expected_behavior": ["Upsert pattern", "Dados realistas", "Relacoes populadas", "Idempotente"]
+  }
+]

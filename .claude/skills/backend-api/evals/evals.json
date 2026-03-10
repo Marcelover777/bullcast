@@ -1,0 +1,32 @@
+[
+  {
+    "eval_id": 1,
+    "eval_name": "rest-api-crud",
+    "prompt": "Crie uma API REST completa para gerenciar posts de blog. CRUD com paginacao e filtros.",
+    "expected_behavior": ["5 endpoints CRUD", "Paginacao", "Filtros via query", "Error handling", "Status codes corretos"]
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "auth-jwt-refresh",
+    "prompt": "Implemente autenticacao JWT com refresh tokens. Login, register, refresh, logout.",
+    "expected_behavior": ["Access + refresh tokens", "Duracoes corretas", "Refresh endpoint", "Logout invalida token"]
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "middleware-stack",
+    "prompt": "Crie um middleware stack: rate limit, auth, validation, error handler.",
+    "expected_behavior": ["Rate limiting", "Auth middleware", "Zod validation", "Error handler global"]
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "graphql-schema",
+    "prompt": "Defina um schema GraphQL para um app de tarefas: users, projects, tasks com relations.",
+    "expected_behavior": ["Types definidos", "Queries e Mutations", "Relations corretas", "Input types"]
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "api-security-audit",
+    "prompt": "Revise esta API e identifique problemas de seguranca.",
+    "expected_behavior": ["Input validation check", "SQL injection check", "Auth em rotas protegidas", "CORS config"]
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "eval_id": 1,
+    "eval_name": "dockerfile-nextjs",
+    "prompt": "Crie um Dockerfile multi-stage para um app Next.js 15 com Prisma.",
+    "expected_behavior": ["Multi-stage build", "Node alpine", "Prisma generate", "Standalone output", "Minimal final image"]
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "github-actions-ci",
+    "prompt": "Configure GitHub Actions para CI: lint, type-check, test, deploy to Vercel on main.",
+    "expected_behavior": ["4 jobs", "Dependencies corretas", "Condicao de deploy", "Secrets usados"]
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "docker-compose-dev",
+    "prompt": "Crie um docker-compose para dev: app Next.js + PostgreSQL + Redis.",
+    "expected_behavior": ["3 services", "Volumes hot reload", "Network compartilhada", "Env files"]
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "vercel-config",
+    "prompt": "Configure deploy Vercel com env variables, regions e build settings para um SaaS.",
+    "expected_behavior": ["vercel.json completo", "Regions otimizadas", "Env management", "Build config"]
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "rollback-strategy",
+    "prompt": "Defina uma estrategia de rollback para deploy em producao.",
+    "expected_behavior": ["Rollback command", "Health checks", "Monitoring alerts", "Communication plan"]
+  }
+]

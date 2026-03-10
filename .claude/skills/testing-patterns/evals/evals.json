@@ -1,0 +1,32 @@
+[
+  {
+    "eval_id": 1,
+    "eval_name": "unit-tests-hook",
+    "prompt": "Escreva unit tests para um hook useCart que adiciona, remove e calcula total de items.",
+    "expected_behavior": ["renderHook usado", "act() para acoes", "3+ test cases", "Edge cases", "Vitest imports"]
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "e2e-playwright-login",
+    "prompt": "Escreva testes E2E com Playwright para um fluxo de login: sucesso, erro, esqueci senha.",
+    "expected_behavior": ["3 test cases", "Page interactions", "Assertions corretas", "Error state testado"]
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "tdd-red-green-refactor",
+    "prompt": "Implemente uma funcao de validacao de senha usando TDD. Min 8 chars, 1 maiuscula, 1 numero.",
+    "expected_behavior": ["Teste escrito primeiro", "Implementacao minima", "Refactor", "Edge cases"]
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "integration-api-test",
+    "prompt": "Escreva integration tests para uma API de CRUD de usuarios. Include auth.",
+    "expected_behavior": ["CRUD testado", "Auth header", "Status codes verificados", "Cleanup entre testes"]
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "mock-strategy",
+    "prompt": "Teste um componente que busca dados de API e exibe lista. Mock o fetch.",
+    "expected_behavior": ["vi.mock ou vi.fn", "Loading state testado", "Success state", "Error state", "Cleanup"]
+  }
+]

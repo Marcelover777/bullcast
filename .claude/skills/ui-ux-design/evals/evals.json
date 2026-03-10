@@ -1,0 +1,69 @@
+{
+  "skill_name": "ui-ux-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Crie um design system completo para um app de fintech. Dark mode, accent verde.",
+      "expected_output": "Complete design system with tokens, component specs, semantic colors, typography, spacing",
+      "files": [],
+      "expectations": [
+        "Design tokens defined (colors, typography, spacing, borders, shadows)",
+        "Component specifications for at least 5 UI components",
+        "Semantic color naming (primary, secondary, success, error, not raw hex)",
+        "Typography scale with defined sizes and line-heights",
+        "Spacing system based on consistent multiplier (4px or 8px)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Converta este componente do Figma para React + Tailwind: Um card de usuario com avatar circular 48px, nome em bold 16px, email em gray 14px, botao 'Ver Perfil' em azul.",
+      "expected_output": "React component matching Figma description with proper Tailwind styling",
+      "files": [],
+      "expectations": [
+        "React component with TypeScript props interface",
+        "Design tokens extracted from the description",
+        "Responsive component that adapts to container",
+        "Hover states on interactive elements",
+        "Accessible with proper ARIA attributes"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Faca um audit de acessibilidade nesta pagina de login com email e senha.",
+      "expected_output": "Accessibility audit report with contrast checks, focus states, ARIA labels, keyboard nav, error handling",
+      "files": [],
+      "expectations": [
+        "Color contrast verification against WCAG AA standards",
+        "Focus state assessment for all interactive elements",
+        "ARIA labels and roles audit",
+        "Error message accessibility evaluation",
+        "Keyboard navigation flow analysis"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Crie um layout responsivo para um dashboard de analytics. 4 cards KPI + graficos + tabela.",
+      "expected_output": "Responsive dashboard layout with KPI cards, charts area, and data table",
+      "files": [],
+      "expectations": [
+        "Responsive layout using CSS Grid or Flexbox",
+        "Grid system that adapts across breakpoints",
+        "Mobile layout stacking cards and sections vertically",
+        "4 KPI card components with consistent styling",
+        "Data table with responsive behavior (scroll or stack)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Crie uma mini component library: Button, Input, Card, Modal, Toast. Com variantes e states.",
+      "expected_output": "Component library with 5 components, each with variants and states",
+      "files": [],
+      "expectations": [
+        "All 5 components implemented (Button, Input, Card, Modal, Toast)",
+        "Multiple variants per component (primary/secondary/outline etc)",
+        "Interactive states defined (hover, focus, disabled, active)",
+        "Consistent design tokens applied across all components"
+      ]
+    }
+  ]
+}

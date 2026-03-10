@@ -1,0 +1,55 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"BLOCKED: Nao edite diretamente na branch main/master\" >&2; exit 1; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r .file_path 2>/dev/null); if echo \"$FILE\" | grep -qE \"\\.(env|key|pem|secret)$\"; then echo \"BLOCKED: Arquivo sensivel detectado\" >&2; exit 1; fi'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r .file_path 2>/dev/null); if echo \"$FILE\" | grep -qE \"\\.(ts|tsx|js|jsx|json|css|html|md)$\"; then npx prettier --write \"$FILE\" 2>/dev/null; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r .file_path 2>/dev/null); if echo \"$FILE\" | grep -qE \"\\.(ts|tsx|js|jsx)$\"; then npx eslint --fix \"$FILE\" 2>/dev/null; npx biome check --write \"$FILE\" 2>/dev/null; fi'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'npx tsc --noEmit 2>/dev/null; npx vitest run --reporter=verbose 2>/dev/null || true'"
+          }
+        ]
+      }
+    ]
+  }
+}
