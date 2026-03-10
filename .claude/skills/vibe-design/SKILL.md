@@ -1,12 +1,13 @@
 ---
 name: vibe-design
 description: >
-  Framework de design premium usando extracao de inteligencia visual de referencias.
-  Use esta skill SEMPRE que o usuario pedir para criar um site, landing page, pagina
-  de produto, portfolio, banner, ou qualquer interface web. Tambem use quando o
-  usuario mencionar "design bonito", "profissional", "premium", "Awwwards", "vibe",
-  "animacoes", "glassmorphism", "parallax", ou pedir algo que "nao pareca feito por IA".
-  Esta skill transforma outputs genericos em designs de nivel Awwwards.
+  Framework de design premium para interfaces web de nivel Awwwards.
+  Use esta skill SEMPRE que o usuario pedir qualquer coisa com HTML/CSS/JS visual:
+  site, landing page, pagina de produto, portfolio, banner, componente, dashboard, app.
+  Use tambem quando mencionar: "design bonito", "profissional", "premium", "Awwwards",
+  "vibe", "animacoes", "glassmorphism", "parallax", "nao pareca IA", "moderno",
+  "impactante", "sofisticado", "minimalista", "editorial", "neon", "brutalist".
+  Esta skill e OBRIGATORIA para qualquer output visual — nunca gere HTML/CSS sem ela.
 allowed-tools:
   - Read
   - Write
@@ -20,14 +21,15 @@ allowed-tools:
 ## Pipeline obrigatorio (NUNCA pule etapas)
 
 ### FASE 1 — CURADORIA (antes de qualquer codigo)
-1. Pergunte ao usuario: **"Qual a vibe? (minimalista, brutalist, glassmorphism, neon, editorial, organico)"**
-2. Se o usuario nao souber, sugira **3 referencias do Awwwards/Godly.website**
-3. Extraia mentalmente:
-   - tipografia
-   - paleta
-   - espacamento
-   - ritmo
-   - efeitos especiais
+1. Se o usuario **ja especificou a vibe** (ex: "minimalista", "glassmorphism"), confirme e prossiga.
+   Se **nao especificou**, pergunte: **"Qual a vibe? (minimalista, brutalist, glassmorphism, neon, editorial, organico)"**
+2. Se o usuario nao souber, proponha **3 referencias do Awwwards/Godly.website** com descricao visual.
+3. Extraia e documente no output:
+   - tipografia (familia, pesos, tamanhos)
+   - paleta (background, foreground, accent)
+   - espacamento (ritmo base)
+   - efeitos especiais (glassmorphism, glow, blur, etc)
+   - tom geral (luxo, tech, organico, editorial)
 
 ---
 
@@ -135,3 +137,6 @@ Checklist antes de entregar:
 - Espacamento inconsistente (misturar px, rem, em sem sistema)
 - Animacoes sem ScrollTrigger (tudo aparece de uma vez)
 - Ignorar mobile (desktop-first e anti-padrao em 2026)
+- Pular a Fase 2 (Design Tokens) e ir direto pro HTML
+- Usar Tailwind sem definir tokens customizados primeiro
+- Entregar apenas HTML/CSS estatico sem nenhuma animacao

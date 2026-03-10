@@ -2,10 +2,12 @@
 name: ui-ux-design
 description: >
   Design system completo com integracao Figma MCP. Use esta skill SEMPRE que o usuario
-  pedir para criar design system, componentes UI, user flows, wireframes, prototipos,
-  ou converter designs do Figma para codigo. Tambem use quando mencionar "UI", "UX",
-  "design system", "Figma", "componentes", "wireframe", "prototipo", "user flow",
-  "acessibilidade", "design tokens", "component library". Extends ui-ux-pro-max skill.
+  pedir design system, componentes UI, user flows, wireframes, prototipos, ou converter
+  designs do Figma para codigo. Tambem use quando mencionar: "UI", "UX", "design system",
+  "Figma", "componentes", "wireframe", "prototipo", "user flow", "acessibilidade",
+  "design tokens", "component library", "design critique", "audit de UI", "WCAG",
+  "contrast", "accessibility", "mini library", "button variants", "input states".
+  Use mesmo que o usuario nao mencione Figma — qualquer pedido de componentes UI aciona esta skill.
 allowed-tools:
   - Read
   - Write
@@ -39,7 +41,7 @@ Start → Login/Signup → Onboarding → Dashboard → [Core Action] → Succes
 ```
 
 ### FASE 3 — DESIGN TOKENS
-Criar tokens completos:
+Criar tokens completos **antes de qualquer componente**:
 - **Colors**: primary, secondary, accent, neutral, semantic (error, warning, success, info)
 - **Typography**: font families, sizes (fluid scale), weights, line-heights
 - **Spacing**: 4px/8px base system
@@ -50,8 +52,8 @@ Criar tokens completos:
 
 ### FASE 4 — COMPONENT LIBRARY
 Componentes base (atomicos):
-- Button (primary, secondary, ghost, destructive + sizes)
-- Input (text, email, password, search + states)
+- Button (primary, secondary, ghost, destructive + sizes + disabled + loading states)
+- Input (text, email, password, search + states: default, focus, error, disabled)
 - Select, Checkbox, Radio, Switch, Slider
 - Badge, Tag, Avatar, Icon
 - Tooltip, Popover, Dialog/Modal
@@ -63,13 +65,15 @@ Compostos:
 - Form (with validation states)
 - Toast/Notification
 
+**Regra**: cada componente precisa de minimo 2 variantes e 3 estados (default, hover/focus, disabled).
+
 ### FASE 5 — FIGMA MCP WORKFLOW
 Se o usuario fornecer um link do Figma:
 1. Usar `get_design_context` para extrair design
 2. Mapear componentes Figma → componentes do code
-3. Extrair tokens (cores, fonts, spacing)
-4. Gerar codigo fiel ao design
-5. Usar `get_variable_defs` para tokens exatos
+3. Extrair tokens (cores, fonts, spacing) com `get_variable_defs`
+4. Gerar codigo fiel ao design, preservando espacamentos exatos
+5. Registrar mapeamento com `add_code_connect_map` para futuro reuso
 
 ### FASE 6 — ACCESSIBILITY AUDIT
 Checklist WCAG AA:
@@ -82,3 +86,11 @@ Checklist WCAG AA:
 - [ ] Error messages associadas ao campo (aria-describedby)
 - [ ] Reduced motion respeitado
 - [ ] Semantic HTML (heading hierarchy, landmarks)
+
+---
+
+## Regras de ouro
+- **Tokens antes de componentes**: nunca crie um componente sem tokens definidos.
+- **Variantes explicitadas**: todo componente precisa de pelo menos 2 variantes e 3 estados.
+- **Consistencia acima de criatividade**: tokens garantem consistencia; criatividade fica no layout.
+- **Acessibilidade nao e opcional**: WCAG AA e o minimo aceitavel em 2026.

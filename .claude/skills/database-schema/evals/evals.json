@@ -1,32 +1,70 @@
-[
-  {
-    "eval_id": 1,
-    "eval_name": "schema-ecommerce",
-    "prompt": "Crie um Prisma schema para um e-commerce: users, products, orders, order_items, categories.",
-    "expected_behavior": ["5 models", "Relacoes corretas", "Indexes", "createdAt/updatedAt", "Enums"]
-  },
-  {
-    "eval_id": 2,
-    "eval_name": "migration-workflow",
-    "prompt": "Crie a migration inicial para um app de tarefas e explique o workflow de migrations.",
-    "expected_behavior": ["Prisma schema", "Comando migrate", "Explicacao do workflow", "Seed data"]
-  },
-  {
-    "eval_id": 3,
-    "eval_name": "rls-supabase",
-    "prompt": "Configure Row Level Security no Supabase para um app multi-tenant.",
-    "expected_behavior": ["RLS habilitado", "Policies por tabela", "Tenant isolation", "Admin override"]
-  },
-  {
-    "eval_id": 4,
-    "eval_name": "performance-indexes",
-    "prompt": "Analise este schema e sugira indexes para otimizar queries comuns de um dashboard.",
-    "expected_behavior": ["Indexes em FKs", "Composite indexes", "Justificativa", "Trade-offs"]
-  },
-  {
-    "eval_id": 5,
-    "eval_name": "seed-data-completo",
-    "prompt": "Crie seed data para popular um app de blog com 5 users, 20 posts e 10 tags.",
-    "expected_behavior": ["Upsert pattern", "Dados realistas", "Relacoes populadas", "Idempotente"]
-  }
-]
+{
+  "skill_name": "database-schema",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Crie um schema Prisma completo para um SaaS com Users, Organizations, e multi-tenancy.",
+      "expected_output": "Schema Prisma com models User, Organization, Membership e politicas RLS para multi-tenancy",
+      "files": [],
+      "expectations": [
+        "Models User e Organization definidos com campos essenciais",
+        "Tabela de relacao (Membership ou similar) para N:M entre User e Organization",
+        "IDs usando cuid() ou uuid()",
+        "Campos createdAt e updatedAt em todos os models",
+        "Indexes em foreign keys e campos de busca frequente"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Modele um sistema de e-commerce: Products, Categories, Orders, OrderItems.",
+      "expected_output": "Schema Prisma completo com relacoes, enums e constraints para e-commerce",
+      "files": [],
+      "expectations": [
+        "Models Product, Category, Order e OrderItem definidos",
+        "Relacao N:M entre Product e Category",
+        "OrderItem armazena preco no momento da compra (snapshot)",
+        "Status de Order como enum (PENDING, PAID, SHIPPED, DELIVERED)",
+        "Soft delete implementado onde relevante"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Como criar migrations seguras para adicionar uma coluna NOT NULL em tabela com dados existentes?",
+      "expected_output": "Estrategia de migration em 3 passos: adicionar nullable, backfill, tornar NOT NULL",
+      "files": [],
+      "expectations": [
+        "Estrategia em multiplos passos (nao uma migration direta para NOT NULL)",
+        "Passo 1: adicionar coluna como nullable",
+        "Passo 2: backfill dos dados existentes",
+        "Passo 3: migration para tornar NOT NULL",
+        "Orienta sobre quando aplicar em producao com zero downtime"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Configure RLS (Row Level Security) no Supabase para um app de notas pessoais.",
+      "expected_output": "Politicas RLS de SELECT, INSERT, UPDATE, DELETE usando auth.uid()",
+      "files": [],
+      "expectations": [
+        "Habilita RLS na tabela com ALTER TABLE ... ENABLE ROW LEVEL SECURITY",
+        "Policy de SELECT que filtra por auth.uid()",
+        "Policy de INSERT que garante owner_id = auth.uid()",
+        "Policies de UPDATE e DELETE para o proprio usuario",
+        "Orienta sobre policy para admin (se necessario)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Escreva um seed script para popular o banco com dados de teste realistas.",
+      "expected_output": "Seed script TypeScript com upsert pattern, dados realistas e idempotencia",
+      "files": [],
+      "expectations": [
+        "Usa upsert pattern (createMany com skipDuplicates ou upsert)",
+        "Script e idempotente (pode rodar multiplas vezes sem duplicar)",
+        "Dados sao realistas e nao apenas 'test1', 'test2'",
+        "Respeita a ordem de insercao pelas relacoes (FK constraints)",
+        "Tem funcao main com chamada no final do arquivo"
+      ]
+    }
+  ]
+}

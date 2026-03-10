@@ -1,32 +1,69 @@
-[
-  {
-    "eval_id": 1,
-    "eval_name": "dockerfile-nextjs",
-    "prompt": "Crie um Dockerfile multi-stage para um app Next.js 15 com Prisma.",
-    "expected_behavior": ["Multi-stage build", "Node alpine", "Prisma generate", "Standalone output", "Minimal final image"]
-  },
-  {
-    "eval_id": 2,
-    "eval_name": "github-actions-ci",
-    "prompt": "Configure GitHub Actions para CI: lint, type-check, test, deploy to Vercel on main.",
-    "expected_behavior": ["4 jobs", "Dependencies corretas", "Condicao de deploy", "Secrets usados"]
-  },
-  {
-    "eval_id": 3,
-    "eval_name": "docker-compose-dev",
-    "prompt": "Crie um docker-compose para dev: app Next.js + PostgreSQL + Redis.",
-    "expected_behavior": ["3 services", "Volumes hot reload", "Network compartilhada", "Env files"]
-  },
-  {
-    "eval_id": 4,
-    "eval_name": "vercel-config",
-    "prompt": "Configure deploy Vercel com env variables, regions e build settings para um SaaS.",
-    "expected_behavior": ["vercel.json completo", "Regions otimizadas", "Env management", "Build config"]
-  },
-  {
-    "eval_id": 5,
-    "eval_name": "rollback-strategy",
-    "prompt": "Defina uma estrategia de rollback para deploy em producao.",
-    "expected_behavior": ["Rollback command", "Health checks", "Monitoring alerts", "Communication plan"]
-  }
-]
+{
+  "skill_name": "cicd-deploy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Crie um Dockerfile multi-stage otimizado para uma aplicacao Next.js 15.",
+      "expected_output": "Dockerfile com 4 stages (base, deps, builder, runner) otimizado para producao",
+      "files": [],
+      "expectations": [
+        "Multi-stage build com pelo menos 3 stages (deps, builder, runner)",
+        "Usa node:20-alpine ou similar para imagem leve",
+        "Stage de producao nao inclui devDependencies",
+        "EXPOSE e CMD configurados corretamente",
+        "Aproveita layer caching (COPY package.json antes do COPY . .)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Configure um workflow GitHub Actions para CI/CD com lint, testes e deploy na Vercel.",
+      "expected_output": "Workflow YAML com jobs de lint, test, deploy com triggers e secrets corretos",
+      "files": [],
+      "expectations": [
+        "Triggers configurados: push main/develop e PR to main",
+        "Jobs em sequencia ou paralelo: lint, test, deploy",
+        "Deploy condicional apenas na branch main",
+        "Usa secrets para tokens da Vercel",
+        "Cache de node_modules entre runs"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Como gerenciar variaveis de ambiente entre dev, staging e producao com Vercel?",
+      "expected_output": "Estrategia de env vars com .env files locais, Vercel UI e GitHub Secrets",
+      "files": [],
+      "expectations": [
+        "Distingue entre .env.local (dev), .env.development e .env.production",
+        "Orienta sobre configuracao de vars na Vercel UI por ambiente",
+        "Menciona uso de GitHub Secrets para CI/CD",
+        "Orienta sobre variaveis publicas (NEXT_PUBLIC_) vs privadas"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Elabore um checklist de pre-deploy para uma aplicacao critica com banco de dados.",
+      "expected_output": "Checklist ordenado cobrindo testes, migrations, env vars, health check e rollback",
+      "files": [],
+      "expectations": [
+        "Inclui verificacao de testes passando",
+        "Inclui type-check e build sem erros",
+        "Aborda migrations de banco (aplicar antes do deploy)",
+        "Inclui health check endpoint funcional",
+        "Define plano de rollback em caso de falha"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Configure Docker Compose para desenvolvimento local com Next.js, PostgreSQL e Redis.",
+      "expected_output": "docker-compose.yml com servicos app, db e redis com volumes e networking",
+      "files": [],
+      "expectations": [
+        "Define servicos: app, postgres e redis",
+        "Volumes persistentes para o banco de dados",
+        "Rede interna entre os servicos",
+        "Hot reload configurado para o servico de app em dev",
+        "Variaveis de ambiente via env_file ou environment"
+      ]
+    }
+  ]
+}
