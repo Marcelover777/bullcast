@@ -1,0 +1,2 @@
+# Baseline output pending - run Skill Creator eval cycle
+Prompt: Crie uma landing page para um SaaS B2B de gestao de projetos, estilo Linear

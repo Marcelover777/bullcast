@@ -1,0 +1,75 @@
+{
+  "skill": "backend-api",
+  "version": "1.0",
+  "baseline_date": "2026-03-10",
+  "baseline_pass_rate": null,
+  "status": "pending_eval",
+  "note": "Run /eval to populate pass_rate before promoting to regression suite",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Crie uma API REST completa para gerenciar posts de blog. CRUD com paginacao e filtros.",
+      "expected_output": "5 endpoints REST com paginacao, filtros, error handling, status codes corretos e validacao Zod",
+      "files": [],
+      "expectations": [
+        "Define os 5 endpoints CRUD: GET /posts, GET /posts/:id, POST /posts, PUT/PATCH /posts/:id, DELETE /posts/:id",
+        "Paginacao via query params (?page=1&perPage=10) com meta no response",
+        "Pelo menos 1 filtro (ex: ?status=published)",
+        "Response format consistente: { data, error } ou { data, meta }",
+        "HTTP status codes corretos (201 Created, 404, 422, etc)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Implemente autenticacao JWT com refresh tokens. Login, register, refresh, logout.",
+      "expected_output": "Endpoints de auth com access token (15min) + refresh token (7d), logout com invalidacao",
+      "files": [],
+      "expectations": [
+        "Access token com expiracao curta (15min ou configuravel)",
+        "Refresh token com expiracao longa (7 dias)",
+        "Endpoint POST /auth/refresh que retorna novo access token",
+        "Logout invalida o refresh token",
+        "Senhas hasheadas com bcrypt ou similar"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Crie um middleware stack: rate limit, auth, validation, error handler.",
+      "expected_output": "4 middlewares em ordem correta com configuracoes e exemplos de uso",
+      "files": [],
+      "expectations": [
+        "Rate limiting configurado (ex: 100 req/min para unauth, 1000 para auth)",
+        "Auth middleware verifica JWT e anexa user ao request",
+        "Validation middleware usa Zod para validar body/params/query",
+        "Error handler global captura todos os erros e retorna formato consistente",
+        "Ordem dos middlewares esta correta (rate limit > auth > validate > handler > error)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Defina um schema GraphQL para um app de tarefas: users, projects, tasks com relations.",
+      "expected_output": "Schema GraphQL completo com Types, Queries, Mutations e Subscriptions para o dominio",
+      "files": [],
+      "expectations": [
+        "Types definidos para User, Project e Task com campos corretos",
+        "Relacoes configuradas (User hasMany Projects, Project hasMany Tasks)",
+        "Queries para listar e buscar por ID",
+        "Mutations para criar, atualizar e deletar",
+        "Input types separados dos Types de resposta"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Revise esta API e identifique os principais problemas de seguranca.",
+      "expected_output": "Relatorio de seguranca com problemas encontrados, severidade e correcoes recomendadas",
+      "files": [],
+      "expectations": [
+        "Verifica validacao de input em todos os endpoints",
+        "Checa prevencao de SQL injection (uso de ORM ou queries parametrizadas)",
+        "Avalia autenticacao em rotas protegidas",
+        "Verifica configuracao de CORS",
+        "Avalia exposicao de dados sensiveis no response"
+      ]
+    }
+  ]
+}

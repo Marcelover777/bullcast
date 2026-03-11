@@ -1,0 +1,17 @@
+{
+  "eval_id": 3,
+  "eval_name": "onboarding-flow",
+  "prompt": "Crie um fluxo de onboarding de 3 steps para um app mobile web, glassmorphism",
+  "assertions": [
+    {"name": "asks-vibe-or-confirms-style", "description": "Confirms glassmorphism approach before coding", "type": "manual"},
+    {"name": "generates-design-tokens-first", "description": "Generates design tokens with glassmorphism properties BEFORE writing HTML", "type": "manual"},
+    {"name": "glassmorphism-tokens", "description": "Design tokens include backdrop-filter, glass-bg, glass-border", "type": "manual"},
+    {"name": "3-step-flow", "description": "Implements exactly 3 distinct onboarding steps", "type": "manual"},
+    {"name": "mobile-first-9-16", "description": "Layout is mobile-first, optimized for 9:16 viewport", "type": "manual"},
+    {"name": "step-navigation", "description": "Has next/back navigation and step indicator", "type": "manual"},
+    {"name": "follows-6-phase-pipeline", "description": "Output follows the 6-phase pipeline order", "type": "manual"}
+  ],
+  "pass_rate": null,
+  "status": "pending_manual_review",
+  "note": "Run Skill Creator eval cycle to score assertions"
+}

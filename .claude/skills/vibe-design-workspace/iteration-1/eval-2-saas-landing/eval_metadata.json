@@ -1,0 +1,17 @@
+{
+  "eval_id": 2,
+  "eval_name": "saas-landing",
+  "prompt": "Crie uma landing page para um SaaS B2B de gestao de projetos, estilo Linear",
+  "assertions": [
+    {"name": "asks-vibe-or-confirms-style", "description": "Asks about vibe or confirms the minimal dark style before coding", "type": "manual"},
+    {"name": "generates-design-tokens-first", "description": "Generates CSS custom properties with design tokens BEFORE writing HTML", "type": "manual"},
+    {"name": "dark-mode-color-tokens", "description": "Defines dark mode palette consistent with Linear-style aesthetic", "type": "manual"},
+    {"name": "uses-8px-spacing-system", "description": "Uses multiples of 8px for spacing (padding, margin, gap)", "type": "manual"},
+    {"name": "includes-gsap-scrolltrigger", "description": "Includes GSAP ScrollTrigger for scroll-based animations", "type": "manual"},
+    {"name": "responsive-3-breakpoints", "description": "Has responsive styles for mobile, tablet, and desktop", "type": "manual"},
+    {"name": "follows-6-phase-pipeline", "description": "Output follows the 6-phase pipeline order", "type": "manual"}
+  ],
+  "pass_rate": null,
+  "status": "pending_manual_review",
+  "note": "Run Skill Creator eval cycle to score assertions"
+}
