@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r .file_path 2>/dev/null); if echo \"$FILE\" | grep -qE \"\\.(env|key|pem|secret)$\"; then echo \"BLOCKED: Arquivo sensivel detectado\" >&2; exit 1; fi'"
+            "command": "bash -c 'FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r .file_path 2>/dev/null); if echo \"$FILE\" | grep -qE \"\\.(env|key|pem|secret)$\"; then echo \"BLOCKED: Arquivo sensivel detectado — use .env.example como template\" >&2; exit 1; fi'"
           }
         ]
       }
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r .file_path 2>/dev/null); if echo \"$FILE\" | grep -qE \"\\.(ts|tsx|js|jsx)$\"; then npx eslint --fix \"$FILE\" 2>/dev/null; npx biome check --write \"$FILE\" 2>/dev/null; fi'"
+            "command": "bash -c 'FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r .file_path 2>/dev/null); if echo \"$FILE\" | grep -qE \"\\.(ts|tsx|js|jsx)$\"; then npx eslint --fix \"$FILE\" 2>/dev/null; fi'"
           }
         ]
       }
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'npx tsc --noEmit 2>/dev/null; npx vitest run --reporter=verbose 2>/dev/null || true'"
+            "command": "bash -c 'if [ -f tsconfig.json ]; then npx tsc --noEmit 2>/dev/null; fi; if [ -f vitest.config.ts ] || [ -f vitest.config.js ]; then npx vitest run --reporter=verbose 2>/dev/null || true; fi'"
           }
         ]
       }
