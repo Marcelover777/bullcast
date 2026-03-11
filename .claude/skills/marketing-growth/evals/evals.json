@@ -1,0 +1,32 @@
+[
+  {
+    "name": "landing-page-cro",
+    "prompt": "Otimiza minha landing page para conversao",
+    "expected_behavior": [
+      "Analisa estrutura atual da landing",
+      "Aplica principios de CRO",
+      "Sugere hero, social proof, CTA",
+      "Foca em 1 objetivo por pagina"
+    ]
+  },
+  {
+    "name": "seo-setup",
+    "prompt": "Configura SEO basico pro meu projeto Next.js",
+    "expected_behavior": [
+      "Configura meta tags e og:image",
+      "Gera sitemap.xml e robots.txt",
+      "Inclui schema markup JSON-LD",
+      "Menciona Core Web Vitals"
+    ]
+  },
+  {
+    "name": "analytics-setup",
+    "prompt": "Preciso configurar analytics no meu SaaS",
+    "expected_behavior": [
+      "Recomenda ferramenta de analytics",
+      "Define eventos essenciais para tracking",
+      "Configura funnel de conversao",
+      "Inclui metricas-chave (activation, retention, conversion)"
+    ]
+  }
+]
