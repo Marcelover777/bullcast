@@ -18,16 +18,36 @@ allowed-tools:
 
 # Vibe Design Framework
 
+## Referencias de Design Intelligence
+
+Antes de iniciar o pipeline, consulte os databases de referencia em `references/`:
+
+| Arquivo | Conteudo | Usar quando |
+|---------|----------|-------------|
+| `ui-styles-catalog.md` | 67 estilos catalogados (V, A, C, O, M) | Identificar e nomear o estilo correto |
+| `color-palettes.md` | Paletas curadas por mood (Dark, Light, Glass, Neon, Earth, Editorial, Gradient) | Selecionar tokens de cor na Fase 2 |
+| `font-pairings.md` | 57 pares tipograficos (Editorial, Tech, Minimal, Display, Organic, Futurista) | Selecionar fontes na Fase 2 |
+| `ux-guidelines.md` | 99 regras por prioridade P1-P5 | Validar decisoes de UX na Fase 6 |
+
+**Fluxo de consulta:**
+1. Identificar estilo → `ui-styles-catalog.md`
+2. Selecionar paleta compativel → `color-palettes.md`
+3. Selecionar tipografia compativel → `font-pairings.md`
+4. Validar contra regras → `ux-guidelines.md` (pelo menos P1 e P2)
+
+---
+
 ## Pipeline obrigatorio (NUNCA pule etapas)
 
 ### FASE 1 — CURADORIA (antes de qualquer codigo)
 1. Se o usuario **ja especificou a vibe** (ex: "minimalista", "glassmorphism"), confirme e prossiga.
    Se **nao especificou**, pergunte: **"Qual a vibe? (minimalista, brutalist, glassmorphism, neon, editorial, organico)"**
-2. Se o usuario nao souber, proponha **3 referencias do Awwwards/Godly.website** com descricao visual.
+2. Se o usuario nao souber, consulte `ui-styles-catalog.md` e proponha **3 estilos com descricao visual**,
+   ou sugira referencias do Awwwards/Godly.website.
 3. Extraia e documente no output:
-   - tipografia (familia, pesos, tamanhos)
-   - paleta (background, foreground, accent)
-   - espacamento (ritmo base)
+   - estilo ID do catalogo (ex: V01 Glassmorphism, A02 Editorial)
+   - tipografia selecionada do `font-pairings.md` (par #)
+   - paleta selecionada do `color-palettes.md` (mood + nome)
    - efeitos especiais (glassmorphism, glow, blur, etc)
    - tom geral (luxo, tech, organico, editorial)
 
@@ -92,12 +112,22 @@ Injete animacoes usando:
 ---
 
 ### FASE 6 — VALIDACAO
-Checklist antes de entregar:
+Checklist antes de entregar (ver `ux-guidelines.md` para detalhes completos):
+
+**P1 CRITICO** (bloqueia entrega):
+- [ ] Contraste WCAG AA (4.5:1 texto normal, 3:1 texto grande)
+- [ ] Erros de formulario identificam campo + causa + correcao
+- [ ] Loading visivel < 200ms para acoes > 1s
+
+**P2-P3 ESSENCIAL**:
 - [ ] Responsivo em **3 breakpoints** (mobile, tablet, desktop)
-- [ ] **Acessibilidade**: contraste WCAG AA, focus states, alt texts
-- [ ] **Performance**: images otimizadas, lazy loading, `font-display: swap`
+- [ ] Focus states visiveis em todos os interativos
+- [ ] Hierarquia visual clara (tamanho, peso, cor, espaco)
+
+**Qualidade**:
 - [ ] Animacoes respeitam `prefers-reduced-motion`
-- [ ] **Design tokens consistentes** em todo o projeto
+- [ ] **Design tokens consistentes** — nenhum valor hardcoded
+- [ ] `font-display: swap` + preconnect para Google Fonts
 - [ ] Nao parece **"feito por IA"** — tem personalidade e ritmo visual
 
 ---

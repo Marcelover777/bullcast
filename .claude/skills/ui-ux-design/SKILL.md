@@ -89,8 +89,61 @@ Checklist WCAG AA:
 
 ---
 
+## Product Type Intelligence
+
+Antes de criar um design system, identifique o tipo de produto para determinar
+os padraoes de componentes e fluxos prioritarios:
+
+### Tipos de produto por categoria
+
+**SaaS / Productivity**
+- Prioridade: tabelas, filtros, dashboards, formularios complexos
+- Padrao nav: sidebar colapsavel + topbar
+- Paleta: light clean ou dark premium, sem distractors
+- Font: Inter, DM Sans, Manrope
+
+**E-commerce / Marketplace**
+- Prioridade: product cards, search, cart, checkout flow
+- Padrao nav: topbar + categorias + busca prominente
+- Paleta: brand-led, imagens dominam
+- Font: serif para luxo, sans moderna para popular
+
+**Consumer App (mobile-first)**
+- Prioridade: bottom navigation, cards de conteudo, onboarding
+- Padrao nav: bottom tabs (5 max) + hamburger para secundario
+- Paleta: high contrast, pastel, ou dark system
+- Font: Rounded (Nunito), ou system font
+
+**Landing Page / Marketing**
+- Prioridade: hero, social proof, pricing, CTA
+- Padrao: scroll linear, sections tematicas
+- Paleta: brand-led, gradientes, impacto
+- Font: display para headline, legivel para corpo
+
+**Dashboard / Analytics**
+- Prioridade: charts, KPIs, tabelas, filtros de data
+- Padrao nav: sidebar com categorias + breadcrumb
+- Paleta: dark premium ou zinc claro, accent para dados
+- Font: Inter ou IBM Plex (monospace para numeros)
+
+**Portfolio / Creative**
+- Prioridade: galeria, case studies, identidade pessoal
+- Padrao: scroll imersivo, transicoes de pagina
+- Paleta: monochrome + 1 accent OU editorial premium
+- Font: display serif + sans minimalista
+
+**Healthcare / Wellness**
+- Prioridade: legibilidade, formularios, calendarios, confianca
+- Padrao: simple nav, muito whitespace, sem distractors
+- Paleta: azul/verde calmo, pasteis, nunca vermelho como accent
+- Font: humanista (Nunito, Raleway), nunca geometric frio
+
+---
+
 ## Regras de ouro
 - **Tokens antes de componentes**: nunca crie um componente sem tokens definidos.
 - **Variantes explicitadas**: todo componente precisa de pelo menos 2 variantes e 3 estados.
 - **Consistencia acima de criatividade**: tokens garantem consistencia; criatividade fica no layout.
 - **Acessibilidade nao e opcional**: WCAG AA e o minimo aceitavel em 2026.
+- **Product type first**: o tipo de produto define os padraoes — nao inverta a logica.
+- **Consultar ux-guidelines.md**: regras P1-P2 sao obrigatorias, P3-P5 sao qualidade.
