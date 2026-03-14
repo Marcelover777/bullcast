@@ -1,13 +1,11 @@
-"use client";
-
+import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { PageTransition } from "@/components/motion/page-transition";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
-
-// ─── Acima do fold — import estático para render imediato ─────────
 import { AlertBanner } from "@/components/dashboard/alert-banner";
 import { HeroPrice } from "@/components/dashboard/hero-price";
 import { ProjectionChart } from "@/components/dashboard/projection-chart";
+import { getLatestSpotPrice, getLatestSignal } from "@/lib/data";
 
 // ─── Abaixo do fold — lazy load (chunks separados, compila sob demanda) ───
 const TechnicalGauges = dynamic(() =>
@@ -42,16 +40,28 @@ const NewsPanel = dynamic(() =>
 );
 
 // ═══════════════════════════════════════════════════════════════════
-// HOME PAGE — PREMIUM DASHBOARD (13 COMPONENTS)
+// HOME PAGE — PREMIUM DASHBOARD (Server Component com dados reais)
 // ═══════════════════════════════════════════════════════════════════
-export default function InicioPage() {
+export default async function InicioPage() {
+  // Fetch paralelo dos dados reais — fallback automatico se null
+  const [spotData, signalData] = await Promise.all([
+    getLatestSpotPrice().catch(() => null),
+    getLatestSignal().catch(() => null),
+  ]);
+
   return (
     <PageTransition>
       {/* ─── Alert Banner (conditional, top of page) ─── */}
       <AlertBanner />
 
       {/* ─── Hero: Price + Recommendation + Forecast ─── */}
-      <HeroPrice />
+      <HeroPrice
+        price={spotData?.price_per_arroba ?? undefined}
+        variationDay={spotData?.variation_day ?? undefined}
+        signal={signalData?.signal ?? undefined}
+        confidence={signalData?.confidence ?? undefined}
+        recommendationText={signalData?.recommendation_text ?? undefined}
+      />
 
       <main className="w-full pb-24">
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 lg:px-10">
