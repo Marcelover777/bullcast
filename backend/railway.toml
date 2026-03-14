@@ -1,0 +1,7 @@
+# backend/railway.toml
+[build]
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+startCommand = "python backend/run_daily.py"
+cronSchedule = "0 18 * * 1-5"
