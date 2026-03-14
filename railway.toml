@@ -1,0 +1,11 @@
+# railway.toml — na raiz do repositório
+# O Railway lê este arquivo automaticamente ao fazer deploy.
+# Este serviço é o backend Python (cron job diário).
+# O frontend Next.js deve ser deployado separadamente na Vercel.
+
+[build]
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+startCommand = "python run_daily.py"
+cronSchedule = "0 18 * * 1-5"
