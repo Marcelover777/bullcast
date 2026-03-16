@@ -95,8 +95,9 @@ def run():
         logger.info("✓ Signal: %s", signal_row.get("signal"))
     except Exception as exc:
         logger.error("✗ Signal: %s", exc)
-        signal_row = {"signal": "HOLD", "confidence": 0, "price_current": 0,
-                      "price_pred_15d": 0}
+        signal_row = {"date": str(date.today()), "signal": "HOLD", "confidence": 0,
+                      "price_current": 0, "price_pred_5d": 0,
+                      "price_pred_15d": 0, "price_pred_30d": 0}
         errors.append(f"Signal: {exc}")
 
     # ── 5. Black Swan Detection ────────────────────────────
