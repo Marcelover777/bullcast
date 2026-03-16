@@ -9,6 +9,7 @@ build/
 .next/
 out/
 .vercel
+tsconfig.tsbuildinfo
 
 # Environment
 .env
