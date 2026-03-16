@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack -p 3001",
     "dev:3000": "next dev --turbopack -p 3000",
+    "dev:3002": "next dev --turbopack -p 3002",
     "dev:webpack": "next dev --webpack -p 3001",
     "build": "next build",
     "start": "next start",
@@ -16,6 +17,8 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@rive-app/react-canvas": "^4.27.1",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.99.1",
     "@types/three": "^0.183.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
