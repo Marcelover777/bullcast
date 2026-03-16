@@ -7,12 +7,23 @@ Usa nasa_power.clima_ponto(lat, lon, inicio, fim) que retorna:
 """
 import asyncio
 import logging
+import math
 from datetime import date, timedelta
 
 from supabase_client import upsert
 from .base_fetcher import with_retry
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_float(val, default: float = 0.0) -> float | None:
+    """Converte para float seguro para JSON (sem NaN/Inf)."""
+    try:
+        f = float(val)
+        return round(f, 1) if math.isfinite(f) else default
+    except (TypeError, ValueError):
+        return default
+
 
 # Coordenadas centróides aproximadas por UF
 STATE_COORDS = {
@@ -73,14 +84,13 @@ def fetch_climate(start: date | None = None) -> None:
                     continue
 
             date_str = str(row_date.date()) if hasattr(row_date, "date") else str(row_date)
-            prec = float(row.get("precip_mm") or row.get("PRECTOTCORR") or 0)
 
             rows.append({
                 "date": date_str,
                 "state": state,
-                "precipitation_mm": round(prec, 1),
-                "temp_avg": round(float(row.get("temp_media") or row.get("T2M") or 0), 1),
-                "temp_max": round(float(row.get("temp_max") or row.get("T2M_MAX") or 0), 1),
+                "precipitation_mm": _safe_float(row.get("precip_mm") or row.get("PRECTOTCORR")),
+                "temp_avg": _safe_float(row.get("temp_media") or row.get("T2M")),
+                "temp_max": _safe_float(row.get("temp_max") or row.get("T2M_MAX")),
                 "precipitation_anomaly_pct": 0.0,   # calculado na análise
                 "risk_level": "low",                 # calculado na análise
                 "pasture_condition": "regular",      # calculado na análise
