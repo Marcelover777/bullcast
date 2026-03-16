@@ -3,12 +3,13 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { TrendingUp, LineChart, MapPin } from "lucide-react";
+import { TrendingUp, LayoutList, ShieldAlert, History } from "lucide-react";
 
 const tabs = [
   { href: "/mercado", label: "Mercado", icon: TrendingUp },
-  { href: "/previsao", label: "Previsão", icon: LineChart },
-  { href: "/regional", label: "Regional", icon: MapPin },
+  { href: "/cotacoes", label: "Cotações", icon: LayoutList },
+  { href: "/riscos", label: "Riscos", icon: ShieldAlert },
+  { href: "/historico", label: "Histórico", icon: History },
 ] as const;
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

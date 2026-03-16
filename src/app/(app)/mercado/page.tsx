@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Minus, ChevronRight, BarChart3, Zap, Shield, AlertTriangle, Newspaper, CloudRain, Package, Ship } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronRight, BarChart3, Zap, Shield, AlertTriangle, Newspaper, CloudRain, Package, Ship, Info, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchMercadoData, type MercadoData, type Signal } from "@/lib/data";
+import { fetchMercadoData, fetchPrevisaoData, type MercadoData, type PrevisaoData, type MLPrediction, type Signal } from "@/lib/data";
 
 // ═══ Mapeamento de sinal do backend → display ═══
 const signalMap: Record<Signal, { label: string; labelLong: string }> = {
@@ -41,23 +41,85 @@ const MOCK: MercadoData = {
   ],
 };
 
+// ═══ Previsão: tipos, mock e helpers ═══
+type Horizon = 5 | 15 | 30;
+
+const MOCK_PREDICTIONS: MLPrediction[] = [
+  { horizon_days: 5, pred_value: 315.80, pred_lower: 312.00, pred_upper: 319.50, confidence: 0.82, model_name: "ensemble", mape: 0.018, directional_accuracy: 0.82, feature_importance: { "spot_lag1": 0.35, "rsi_14": 0.18, "basis": 0.15, "sma_21": 0.12, "volume_b3": 0.10, "usd_brl": 0.10 }, created_at: new Date().toISOString() },
+  { horizon_days: 15, pred_value: 318.40, pred_lower: 310.50, pred_upper: 326.00, confidence: 0.74, model_name: "ensemble", mape: 0.026, directional_accuracy: 0.74, feature_importance: { "spot_lag1": 0.28, "seasonal": 0.22, "basis": 0.18, "cycle_phase": 0.15, "rsi_14": 0.10, "climate": 0.07 }, created_at: new Date().toISOString() },
+  { horizon_days: 30, pred_value: 316.20, pred_lower: 305.00, pred_upper: 328.00, confidence: 0.63, model_name: "ensemble", mape: 0.037, directional_accuracy: 0.63, feature_importance: { "seasonal": 0.30, "cycle_phase": 0.22, "spot_lag1": 0.15, "export_vol": 0.12, "climate": 0.11, "macro": 0.10 }, created_at: new Date().toISOString() },
+];
+
+const predDirectionConfig = {
+  ALTA:    { icon: TrendingUp,   color: "text-bull", bg: "bg-bull/10", barBg: "bg-bull" },
+  BAIXA:   { icon: TrendingDown, color: "text-bear", bg: "bg-bear/10", barBg: "bg-bear" },
+  LATERAL: { icon: Minus,        color: "text-hold", bg: "bg-hold/10", barBg: "bg-hold" },
+};
+
+function getPredDirection(pred: number, current: number): "ALTA" | "BAIXA" | "LATERAL" {
+  const diff = ((pred - current) / current) * 100;
+  if (diff > 0.5) return "ALTA";
+  if (diff < -0.5) return "BAIXA";
+  return "LATERAL";
+}
+
+function getFactorsFromImportance(fi: Record<string, number> | null): string[] {
+  if (!fi || Object.keys(fi).length === 0) return ["Análise sendo processada pelo modelo"];
+  const labelMap: Record<string, string> = {
+    spot_lag1: "Preço recente da arroba (inércia de mercado)",
+    rsi_14: "RSI indicando momentum do preço",
+    basis: "Diferença entre futuro B3 e físico (basis)",
+    sma_21: "Média móvel 21 dias como suporte/resistência",
+    volume_b3: "Volume de contratos na B3",
+    usd_brl: "Câmbio USD/BRL afetando exportações",
+    seasonal: "Padrão sazonal histórico do período",
+    cycle_phase: "Fase do ciclo pecuário (retenção/liquidação)",
+    climate: "Condições climáticas e pastagem",
+    export_vol: "Volume de exportação de carne bovina",
+    macro: "Indicadores macroeconômicos (Selic, IPCA)",
+  };
+  return Object.entries(fi)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 4)
+    .map(([key, weight]) => {
+      const label = labelMap[key] || key;
+      return `${label} (peso: ${(weight * 100).toFixed(0)}%)`;
+    });
+}
+
 export default function MercadoPage() {
   const [data, setData] = useState<MercadoData>(MOCK);
   const [loading, setLoading] = useState(true);
   const [showReasons, setShowReasons] = useState(false);
   const [showTech, setShowTech] = useState(false);
+  const [showPrevisao, setShowPrevisao] = useState(false);
+  const [predData, setPredData] = useState<PrevisaoData>({
+    predictions: MOCK_PREDICTIONS,
+    currentPrice: 311.45,
+    predictionAccuracy: [
+      { horizon: 5, accuracy: 82, total: 45 },
+      { horizon: 15, accuracy: 74, total: 38 },
+      { horizon: 30, accuracy: 68, total: 30 },
+    ],
+  });
+  const [selectedHorizon, setSelectedHorizon] = useState<Horizon>(5);
   const [usingMock, setUsingMock] = useState(true);
 
   useEffect(() => {
-    fetchMercadoData()
-      .then((d) => {
-        if (d.signal) {
-          setData(d);
-          setUsingMock(false);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetchMercadoData().catch(() => null),
+      fetchPrevisaoData().catch(() => null),
+    ]).then(([mercado, previsao]) => {
+      if (mercado?.signal) {
+        setData(mercado);
+        setUsingMock(false);
+      }
+      if (previsao && previsao.predictions.length > 0) {
+        setPredData(previsao);
+        const horizons = previsao.predictions.map((p) => p.horizon_days).sort((a, b) => a - b);
+        if (horizons.length > 0) setSelectedHorizon(horizons[0] as Horizon);
+      }
+    }).finally(() => setLoading(false));
   }, []);
 
   const sig = data.signal!;
@@ -321,6 +383,120 @@ export default function MercadoPage() {
           ))}
         </div>
       </section>
+
+      {/* ═══ PREVISÃO (colapsável) ═══ */}
+      {(() => {
+        const pred = predData.predictions.find((p) => p.horizon_days === selectedHorizon) || predData.predictions[0];
+        if (!pred) return null;
+        const currentPrice = predData.currentPrice || Number(sig.price_current) || 311.45;
+        const predDir = getPredDirection(pred.pred_value, currentPrice);
+        const pdConf = predDirectionConfig[predDir];
+        const PdIcon = pdConf.icon;
+        const pdConfPct = Math.round(pred.confidence * 100);
+        const pdChangePct = ((pred.pred_value - currentPrice) / currentPrice * 100).toFixed(1);
+        const factors = getFactorsFromImportance(pred.feature_importance);
+        const availableHorizons = predData.predictions.map((p) => p.horizon_days).sort((a, b) => a - b) as Horizon[];
+
+        return (
+          <section className="bg-card rounded-xl border border-border overflow-hidden">
+            <button onClick={() => setShowPrevisao(!showPrevisao)} className="w-full flex items-center justify-between p-4 cursor-pointer">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-semibold">Previsão de Preço</h2>
+                <span className={cn("text-[10px] font-bold uppercase px-1.5 py-0.5 rounded", pdConf.bg, pdConf.color)}>
+                  {predDir} {selectedHorizon}d
+                </span>
+              </div>
+              <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", showPrevisao && "rotate-90")} />
+            </button>
+
+            {showPrevisao && (
+              <div className="px-4 pb-4 space-y-4">
+                {/* Seletor de horizonte */}
+                <div className="flex gap-2">
+                  {availableHorizons.map((h) => (
+                    <button
+                      key={h}
+                      onClick={() => setSelectedHorizon(h)}
+                      className={cn(
+                        "flex-1 py-2.5 rounded-lg text-center transition-all duration-300 cursor-pointer",
+                        selectedHorizon === h
+                          ? "bg-primary text-primary-foreground font-bold"
+                          : "bg-background border border-border text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <span className="text-display text-lg">{h}</span>
+                      <span className="text-[10px] block uppercase tracking-wider mt-0.5">dias</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Card da previsão */}
+                <div className={cn("rounded-xl p-4 border", pdConf.bg, "border-border")}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", pdConf.bg)}>
+                      <PdIcon className={cn("w-5 h-5", pdConf.color)} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <p className="text-label text-[9px]">TENDÊNCIA {selectedHorizon} DIAS</p>
+                      <p className={cn("text-display text-lg", pdConf.color)}>{predDir}</p>
+                    </div>
+                    <span className={cn("ml-auto text-sm font-bold tabular-nums", Number(pdChangePct) >= 0 ? "text-bull" : "text-bear")}>
+                      {Number(pdChangePct) >= 0 ? "+" : ""}{pdChangePct}%
+                    </span>
+                  </div>
+
+                  <div className="mb-3">
+                    <p className="text-label text-[9px] mb-1">PREÇO ALVO</p>
+                    <p className="text-display text-3xl text-foreground">
+                      R$ {pred.pred_value.toFixed(2).replace(".", ",")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Faixa: R$ {pred.pred_lower.toFixed(2).replace(".", ",")} — R$ {pred.pred_upper.toFixed(2).replace(".", ",")}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-label text-[9px]">CONFIANÇA</span>
+                      <span className={cn("text-sm font-bold tabular-nums", pdConf.color)}>{pdConfPct}%</span>
+                    </div>
+                    <div className="confidence-bar">
+                      <div className={cn("confidence-bar-fill", pdConf.barBg)} style={{ width: `${pdConfPct}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 mt-2 text-[10px] text-muted-foreground">
+                    <span>MAPE: {(pred.mape * 100).toFixed(1)}%</span>
+                    <span>Acerto direcional: {(pred.directional_accuracy * 100).toFixed(0)}%</span>
+                  </div>
+                </div>
+
+                {/* Feature Importance */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Info className="w-3.5 h-3.5 text-primary" />
+                    <h3 className="text-xs font-semibold">O que sustenta essa previsão</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {factors.map((factor, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className={cn(
+                          "w-4 h-4 rounded flex items-center justify-center shrink-0 text-[9px] font-bold mt-0.5",
+                          pdConf.bg, pdConf.color
+                        )}>
+                          {i + 1}
+                        </span>
+                        <span className="text-xs text-secondary-foreground leading-snug">{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {/* ═══ INDICADORES TÉCNICOS ═══ */}
       <section className="bg-card rounded-xl p-4 border border-border">
