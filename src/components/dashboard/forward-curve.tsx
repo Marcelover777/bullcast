@@ -27,7 +27,7 @@ export function ForwardCurve({ className }: ForwardCurveProps) {
   const firstPrice = mockForwardCurve[0].price;
   const lastPrice = mockForwardCurve[mockForwardCurve.length - 1].price;
   const isContango = lastPrice > firstPrice;
-  const curveShape = isContango ? "Contango" : "Backwardation";
+  const curveShape = isContango ? "Preço futuro ACIMA do atual" : "Preço futuro ABAIXO do atual";
   const curveColor = isContango ? "text-primary" : "text-destructive";
   const curveIcon = isContango ? (
     <TrendingUp className="h-4 w-4" />
@@ -60,7 +60,7 @@ export function ForwardCurve({ className }: ForwardCurveProps) {
         </h2>
         <div className={cn("flex items-center gap-1.5", curveColor)}>
           {curveIcon}
-          <span className="text-micro uppercase tracking-widest font-bold">
+          <span className="text-micro uppercase tracking-widest font-bold max-w-[140px] text-right leading-tight">
             {curveShape}
           </span>
         </div>
@@ -86,7 +86,7 @@ export function ForwardCurve({ className }: ForwardCurveProps) {
         </div>
         <div>
           <span className="text-micro uppercase tracking-widest text-muted-foreground mr-2">
-            Spread:
+            Diferença:
           </span>
           <span className={cn("font-mono font-bold tabular-nums", spreadColor)}>
             {spread >= 0 ? "+" : ""}
@@ -94,6 +94,13 @@ export function ForwardCurve({ className }: ForwardCurveProps) {
           </span>
         </div>
       </div>
+
+      {/* Explicação */}
+      <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+        {isContango
+          ? "O mercado espera que o preço suba — bom momento para travar venda futura."
+          : "O mercado espera que o preço caia — considere vender no físico agora."}
+      </p>
 
       {/* Chart */}
       <div className="h-48 mb-6">

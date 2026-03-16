@@ -477,7 +477,7 @@ export default function MercadoPage() {
 
       {/* ═══ TIMESTAMP ═══ */}
       <p className="text-[10px] text-muted-foreground text-center px-4 leading-relaxed">
-        Dados: CEPEA, B3, BCB, NASA, RSS · Modelo: XGBoost + Prophet · NLP: Claude
+        Dados: CEPEA, B3, BCB, IBGE, NASA · Modelo BullCast
         <br />
         Última atualização: {sig.date ? new Date(sig.date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}
         {" · "}Não constitui recomendação de investimento.

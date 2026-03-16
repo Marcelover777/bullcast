@@ -344,6 +344,11 @@ export default function HistoricoPage() {
             </div>
           </div>
         </ScrollReveal>
+
+        {/* ═══ FOOTER ═══ */}
+        <p className="text-[10px] text-muted-foreground text-center px-4 leading-relaxed">
+          Dados: CEPEA, B3, BCB, IBGE, NASA · Modelo BullCast · Não constitui recomendação de investimento.
+        </p>
       </div>
     </PageTransition>
   );

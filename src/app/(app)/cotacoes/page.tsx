@@ -572,7 +572,7 @@ export default function CotacoesPage() {
 
       {/* ═══ Disclaimer ═══ */}
       <p className="text-[10px] text-muted-foreground text-center px-4 leading-relaxed">
-        Valores livres de Funrural, pagamento à vista. Fonte: CEPEA/ESALQ + IMEA.
+        Dados: CEPEA, B3, BCB, IBGE, NASA · Modelo BullCast · Não constitui recomendação de investimento.
         <br />
         Última atualização: {latestDate ? new Date(latestDate + "T12:00:00").toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR")}
       </p>

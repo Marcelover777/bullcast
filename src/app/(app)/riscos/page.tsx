@@ -296,7 +296,7 @@ export default function RiscosPage() {
           <div className="bg-card border border-border p-4 col-span-2">
             <div className="flex items-center gap-2 mb-3">
               <Globe className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-bold text-foreground">Eventos de Crise (NLP)</h3>
+              <h3 className="text-sm font-bold text-foreground">Eventos de Crise</h3>
             </div>
             {crisisKeywords.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
@@ -429,9 +429,7 @@ export default function RiscosPage() {
 
       {/* ═══ TIMESTAMP ═══ */}
       <p className="text-[10px] text-muted-foreground text-center px-4 leading-relaxed">
-        Fontes: CEPEA, B3, NASA, NLP Claude · Modelo de risco atualizado diariamente.
-        <br />
-        Não constitui recomendação de investimento.
+        Dados: CEPEA, B3, BCB, IBGE, NASA · Modelo BullCast · Não constitui recomendação de investimento.
       </p>
     </div>
   );

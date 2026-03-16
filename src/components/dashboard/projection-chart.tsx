@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { formatBRL } from "@/lib/format";
+import { formatBRL, formatConfidence } from "@/lib/format";
 import { mockAreaChartData, mockRecommendation } from "@/lib/mock-data";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
 
@@ -53,7 +53,7 @@ export function ProjectionChart() {
               Projecao 30 Dias
             </h2>
             <p className="text-micro uppercase tracking-widest text-muted-foreground">
-              Modelo preditivo &mdash; Boi Gordo CEPEA
+              Boi Gordo &mdash; CEPEA
             </p>
           </div>
           <div className="flex items-center gap-2 border border-border px-3 py-1.5">
@@ -61,7 +61,7 @@ export function ProjectionChart() {
               Confianca
             </span>
             <span className="font-mono text-sm font-bold tabular-nums text-primary">
-              {confidence}%
+              {formatConfidence(confidence)}
             </span>
           </div>
         </div>
