@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { formatPercent } from "@/lib/format";
+import { fetchRiscosData, type RiscosData } from "@/lib/data";
 import { mockRiskData, mockClimateData } from "@/lib/mock-data";
 import { RiveSemaphore } from "@/components/animations/rive-semaphore";
 import { RiveGauge } from "@/components/animations/rive-gauge";
@@ -18,21 +19,94 @@ import {
   CloudRain,
   Thermometer,
   Leaf,
+  Loader2,
 } from "lucide-react";
 
-// ─── Animation Variants ─────────────────────────────────────────
+// ─── Map circuit breaker to risk level ──────────────────────────
+function circuitToLevel(cb: string): "low" | "medium" | "high" {
+  if (cb === "VERMELHO" || cb === "LARANJA") return "high";
+  if (cb === "AMARELO") return "medium";
+  return "low";
+}
+
 const riskLevelConfig = {
   low: { color: "text-primary", bg: "bg-primary/10", label: "Baixo" },
   medium: { color: "text-amber-500", bg: "bg-amber-500/10", label: "Moderado" },
   high: { color: "text-destructive", bg: "bg-destructive/10", label: "Alto" },
 };
 
+const STATE_NAMES: Record<string, string> = {
+  SP: "São Paulo",
+  MT: "Mato Grosso",
+  MS: "Mato Grosso do Sul",
+  GO: "Goiás",
+  MG: "Minas Gerais",
+  PA: "Pará",
+  "MT-NUB": "Nova Ubiratã (MT)",
+};
+
 // ═══════════════════════════════════════════════════════════════════
-// RISK RADAR PAGE
+// RISK RADAR PAGE — Real Supabase data + mock fallback
 // ═══════════════════════════════════════════════════════════════════
 export default function RiscosPage() {
-  const risk = mockRiskData;
-  const levelConfig = riskLevelConfig[risk.overallLevel];
+  const [data, setData] = useState<RiscosData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRiscosData()
+      .then(setData)
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Derive display values from real data or fallback to mock
+  const hasReal = data && (data.crisisEvents.length > 0 || data.climateAlerts.length > 0 || data.latestSignal);
+  const level = hasReal ? circuitToLevel(data.circuitBreakerLevel) : mockRiskData.overallLevel;
+  const levelConfig = riskLevelConfig[level];
+
+  // Volatility as 0-100 gauge value
+  const volValue = hasReal
+    ? Math.min(100, Math.round(data.volatilityStd * 40))
+    : mockRiskData.volatility.value;
+
+  // Crisis keywords from real events
+  const crisisKeywords = hasReal && data.crisisEvents.length > 0
+    ? (() => {
+        const kwMap: Record<string, number> = {};
+        for (const ev of data.crisisEvents) {
+          const type = ev.event_type || "outro";
+          kwMap[type] = (kwMap[type] || 0) + 1;
+        }
+        return Object.entries(kwMap).map(([keyword, mentions]) => ({
+          keyword,
+          mentions,
+          trend: "neutral" as const,
+        }));
+      })()
+    : mockRiskData.crisisKeywords;
+
+  // Climate alerts
+  const climateAlerts = hasReal && data.climateAlerts.length > 0
+    ? data.climateAlerts.map((c) => ({
+        state: c.state,
+        stateFull: STATE_NAMES[c.state] || c.state,
+        temperature: c.temp_avg || 0,
+        precipitation: c.precipitation_mm || 0,
+        ndvi: 0,
+        drought: (c.risk_level === "high" ? "alert" : c.risk_level === "medium" ? "warning" : "none") as "none" | "watch" | "warning" | "alert",
+        condition: (c.pasture_condition === "seco" ? "seco" : c.pasture_condition === "chuvoso" ? "chuvoso" : "normal") as "normal" | "seco" | "chuvoso",
+      }))
+    : mockClimateData;
+
+  // Price anomaly from crisis events
+  const hasAnomaly = hasReal
+    ? data.crisisEvents.some((e) => e.event_type === "price_anomaly")
+    : mockRiskData.priceAnomaly.detected;
+
+  // Advice text
+  const advice = hasReal && data.latestSignal?.explanation_text
+    ? data.latestSignal.explanation_text
+    : mockRiskData.advice;
 
   return (
     <PageTransition>
@@ -41,8 +115,14 @@ export default function RiscosPage() {
         <div className="max-w-md mx-auto px-5 h-14 flex items-center justify-between">
           <h1 className="text-lg font-heading font-bold text-foreground">Radar de Riscos</h1>
           <div className={cn("flex items-center gap-1.5 text-sm font-bold", levelConfig.color)}>
-            <ShieldAlert className="w-4 h-4" />
-            <span>{levelConfig.label}</span>
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <ShieldAlert className="w-4 h-4" />
+                <span>{levelConfig.label}</span>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -51,9 +131,12 @@ export default function RiscosPage() {
         {/* Overall Risk Semaphore */}
         <ScrollReveal>
           <div className="flex flex-col items-center gap-4 py-6 bg-card border border-border/50 card-premium">
-            <RiveSemaphore level={risk.overallLevel} />
+            <RiveSemaphore level={level} />
             <p className="text-sm text-muted-foreground text-center max-w-[280px]">
-              Nivel geral de risco do mercado baseado em volatilidade, NLP de crise, anomalias e clima.
+              Nivel geral de risco baseado em volatilidade, NLP de crise, anomalias e clima.
+              {hasReal && (
+                <span className="block mt-1 text-xs text-primary">● Dados em tempo real</span>
+              )}
             </p>
           </div>
         </ScrollReveal>
@@ -65,20 +148,15 @@ export default function RiscosPage() {
             {/* Volatility Gauge */}
             <div className="bg-card border border-border/50 p-4 flex flex-col items-center gap-2 card-premium">
               <RiveGauge
-                value={risk.volatility.value}
+                value={volValue}
                 label="Volatilidade"
-                state={risk.volatility.value > 60 ? "bearish" : risk.volatility.value > 35 ? "neutral" : "bullish"}
+                state={volValue > 60 ? "bearish" : volValue > 35 ? "neutral" : "bullish"}
                 size={120}
               />
               <div className="flex items-center gap-1 text-xs">
-                {risk.volatility.trend === "up" ? (
-                  <TrendingUp className="w-3 h-3 text-destructive" />
-                ) : risk.volatility.trend === "down" ? (
-                  <TrendingDown className="w-3 h-3 text-primary" />
-                ) : (
-                  <Minus className="w-3 h-3 text-muted-foreground" />
-                )}
-                <span className="text-muted-foreground font-medium">Tendencia</span>
+                <span className="text-muted-foreground font-medium">
+                  {hasReal ? `${data.volatilityStd.toFixed(2)}%` : "Tendencia"}
+                </span>
               </div>
             </div>
 
@@ -87,16 +165,18 @@ export default function RiscosPage() {
               <AlertTriangle
                 className={cn(
                   "w-8 h-8",
-                  risk.priceAnomaly.detected ? "text-destructive" : "text-primary"
+                  hasAnomaly ? "text-destructive" : "text-primary"
                 )}
               />
               <div className="text-center">
                 <p className="text-sm font-bold text-foreground">
-                  {risk.priceAnomaly.detected ? "Anomalia Detectada" : "Normal"}
+                  {hasAnomaly ? "Anomalia Detectada" : "Normal"}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Z-Score:{" "}
-                  <span className="font-mono font-bold">{risk.priceAnomaly.zScore.toFixed(1)}</span>
+                  Circuit Breaker:{" "}
+                  <span className="font-mono font-bold">
+                    {hasReal ? data.circuitBreakerLevel : "VERDE"}
+                  </span>
                 </p>
               </div>
             </div>
@@ -105,75 +185,32 @@ export default function RiscosPage() {
             <div className="bg-card border border-border/50 p-4 col-span-2 card-premium">
               <div className="flex items-center gap-2 mb-3">
                 <Globe className="w-4 h-4 text-muted-foreground" />
-                <h3 className="text-sm font-bold text-foreground">Palavras de Crise (NLP)</h3>
+                <h3 className="text-sm font-bold text-foreground">Eventos de Crise</h3>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {risk.crisisKeywords.map((kw) => (
-                  <div
-                    key={kw.keyword}
-                    className="flex items-center justify-between bg-secondary/40 px-3 py-2"
-                  >
-                    <span className="text-sm text-foreground font-medium capitalize">{kw.keyword}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-mono font-bold text-foreground">{kw.mentions}</span>
-                      {kw.trend === "up" ? (
-                        <TrendingUp className="w-3 h-3 text-destructive" />
-                      ) : kw.trend === "down" ? (
-                        <TrendingDown className="w-3 h-3 text-primary" />
-                      ) : (
-                        <Minus className="w-3 h-3 text-muted-foreground" />
-                      )}
+              {crisisKeywords.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {crisisKeywords.slice(0, 6).map((kw) => (
+                    <div
+                      key={kw.keyword}
+                      className="flex items-center justify-between bg-secondary/40 px-3 py-2"
+                    >
+                      <span className="text-sm text-foreground font-medium capitalize">{kw.keyword}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono font-bold text-foreground">{kw.mentions}</span>
+                        {kw.trend === "up" ? (
+                          <TrendingUp className="w-3 h-3 text-destructive" />
+                        ) : kw.trend === "down" ? (
+                          <TrendingDown className="w-3 h-3 text-primary" />
+                        ) : (
+                          <Minus className="w-3 h-3 text-muted-foreground" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* China Quota Progress */}
-        <ScrollReveal delay={0.2}>
-          <div className="bg-card border border-border/50 p-5 card-premium">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-bold text-foreground">Cota China</h3>
-              </div>
-              <span className="text-xs text-muted-foreground font-medium">
-                {risk.chinaQuota.daysRemaining} dias restantes
-              </span>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="relative h-3 bg-secondary/60 overflow-hidden mb-3">
-              <div
-                className={cn(
-                  "absolute inset-y-0 left-0 transition-all duration-1000",
-                  risk.chinaQuota.used / risk.chinaQuota.total > 0.8
-                    ? "bg-destructive"
-                    : risk.chinaQuota.used / risk.chinaQuota.total > 0.6
-                      ? "bg-amber-500"
-                      : "bg-primary"
-                )}
-                style={{ width: `${(risk.chinaQuota.used / risk.chinaQuota.total) * 100}%` }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-baseline gap-1">
-                <GSAPCounter
-                  value={risk.chinaQuota.used}
-                  suffix=""
-                  decimals={0}
-                  className="text-2xl font-bold text-foreground"
-                />
-                <span className="text-sm text-muted-foreground font-medium">
-                  / {risk.chinaQuota.total} mil ton
-                </span>
-              </div>
-              <span className="text-sm font-mono font-bold text-foreground">
-                {Math.round((risk.chinaQuota.used / risk.chinaQuota.total) * 100)}%
-              </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum evento de crise ativo</p>
+              )}
             </div>
           </div>
         </ScrollReveal>
@@ -182,7 +219,7 @@ export default function RiscosPage() {
         <ScrollReveal delay={0.3}>
           <h2 className="text-base font-heading font-bold text-foreground mb-3">Alertas Climaticos</h2>
           <div className="space-y-2">
-            {mockClimateData
+            {climateAlerts
               .filter((c) => c.drought !== "none")
               .map((climate) => (
                 <div
@@ -225,20 +262,19 @@ export default function RiscosPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center gap-1.5">
-                      <Leaf className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs font-mono text-muted-foreground">
-                        NDVI {climate.ndvi.toFixed(2)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{climate.temperature}C</p>
+                    <p className="text-xs font-mono text-muted-foreground">
+                      {climate.temperature > 0 ? `${climate.temperature}°C` : ""}
+                    </p>
+                    {climate.precipitation > 0 && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{climate.precipitation}mm</p>
+                    )}
                   </div>
                 </div>
               ))}
 
-            {mockClimateData.filter((c) => c.drought === "none").length > 0 && (
+            {climateAlerts.filter((c) => c.drought === "none").length > 0 && (
               <p className="text-xs text-muted-foreground text-center py-2">
-                {mockClimateData.filter((c) => c.drought === "none").length} estados sem alertas climaticos
+                {climateAlerts.filter((c) => c.drought === "none").length} estados sem alertas climaticos
               </p>
             )}
           </div>
@@ -251,7 +287,7 @@ export default function RiscosPage() {
               <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-sm font-bold text-foreground mb-2">Orientacao pro Pecuarista</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{risk.advice}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{advice}</p>
               </div>
             </div>
           </div>

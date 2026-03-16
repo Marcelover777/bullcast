@@ -35,14 +35,18 @@ def run():
     from fetchers.macro_fetcher import fetch_macro
     from fetchers.news_fetcher import fetch_news
     from fetchers.climate_fetcher import fetch_climate
+    from fetchers.imea_fetcher import fetch_imea_prices
+    from fetchers.weather_fetcher import fetch_weather_forecast
 
     for name, fn in [
         ("CEPEA spot",     fetch_spot_prices),
         ("CEPEA categorias", fetch_category_prices),
         ("B3 futuros",     fetch_futures),
+        ("IMEA MT+NUB",    fetch_imea_prices),
         ("Macro BCB",      fetch_macro),
         ("Notícias RSS",   fetch_news),
         ("Clima NASA",     fetch_climate),
+        ("Previsão Tempo", fetch_weather_forecast),
     ]:
         try:
             fn()
@@ -161,14 +165,14 @@ def run():
         logger.error("✗ Upsert trade_signals: %s", exc)
         errors.append(f"TradeSignalUpsert: {exc}")
 
-    # ── 7. Telegram ────────────────────────────────────────
+    # ── 7. WhatsApp (Evolution API) + Telegram fallback ────
     try:
-        from alerts.telegram_bot import send_daily_signal, send_crisis_alert
+        from alerts.whatsapp_bot import send_daily_signal as wa_daily, send_crisis_alert as wa_crisis
 
         if circuit_level in ("LARANJA", "VERMELHO") and bs_alerts:
-            send_crisis_alert(bs_alerts[0]["description"], circuit_level)
+            wa_crisis(bs_alerts[0]["description"], circuit_level)
 
-        send_daily_signal(
+        wa_daily(
             signal=signal_row.get("signal", "HOLD"),
             price=float(signal_row.get("price_current", 0)),
             pred_15d=float(signal_row.get("price_pred_15d") or 0),
@@ -177,10 +181,10 @@ def run():
             vol_regime=circuit_level,
             circuit_level=circuit_level,
         )
-        logger.info("✓ Telegram enviado")
+        logger.info("✓ WhatsApp enviado")
     except Exception as exc:
-        logger.error("✗ Telegram: %s", exc)
-        errors.append(f"Telegram: {exc}")
+        logger.error("✗ WhatsApp: %s", exc)
+        errors.append(f"WhatsApp: {exc}")
 
     # ── Resumo ─────────────────────────────────────────────
     if errors:

@@ -8,12 +8,12 @@ from datetime import date
 
 import pandas as pd
 
-from . import xgboost_model, prophet_model
+from . import xgboost_model, prophet_model, sarima_model
 from supabase_client import get_client, insert
 
 logger = logging.getLogger(__name__)
 
-WEIGHTS = {"xgboost": 0.5, "prophet": 0.3}
+WEIGHTS = {"xgboost": 0.5, "prophet": 0.3, "sarima": 0.2}
 
 
 def run_ensemble() -> None:
@@ -67,6 +67,19 @@ def run_ensemble() -> None:
                 total_weight += w
         except Exception as exc:
             logger.error("Prophet %dd falhou: %s", horizon, exc)
+
+        # SARIMA (20%)
+        try:
+            sarima_result = sarima_model.train_and_predict(df, horizon)
+            if sarima_result:
+                results["sarima"] = sarima_result
+                w = WEIGHTS["sarima"]
+                weighted_pred  += sarima_result["pred_value"] * w
+                weighted_lower += sarima_result["pred_lower"] * w
+                weighted_upper += sarima_result["pred_upper"] * w
+                total_weight += w
+        except Exception as exc:
+            logger.error("SARIMA %dd falhou: %s", horizon, exc)
 
         if total_weight == 0:
             logger.error("Nenhum modelo retornou para horizon=%d", horizon)

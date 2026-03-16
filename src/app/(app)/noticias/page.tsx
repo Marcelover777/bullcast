@@ -1,28 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { fetchNoticiasData, type NewsSentiment } from "@/lib/data";
 import { mockNews } from "@/lib/mock-data";
 import type { NewsItem } from "@/lib/mock-data";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/motion/page-transition";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
-import { TrendingUp, TrendingDown, Minus, Zap, Filter } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Zap, Filter, Loader2 } from "lucide-react";
 
 const filters = [
-  { key: "all",         label: "Todas"        },
-  { key: "positive",   label: "Positivas"    },
-  { key: "negative",   label: "Negativas"    },
+  { key: "all", label: "Todas" },
+  { key: "positive", label: "Positivas" },
+  { key: "negative", label: "Negativas" },
   { key: "high_impact", label: "Alto Impacto" },
 ] as const;
 
 type FilterKey = (typeof filters)[number]["key"];
 
 const sentimentConfig = {
-  positive: { label: "POSITIVO", color: "text-primary",          bg: "bg-primary/10",     border: "border-primary/20",     icon: TrendingUp   },
-  negative: { label: "NEGATIVO", color: "text-destructive",      bg: "bg-destructive/10", border: "border-destructive/20", icon: TrendingDown },
-  neutral:  { label: "NEUTRO",   color: "text-muted-foreground", bg: "bg-muted/40",       border: "border-border",         icon: Minus        },
+  positive: { label: "POSITIVO", color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", icon: TrendingUp },
+  negative: { label: "NEGATIVO", color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/20", icon: TrendingDown },
+  neutral: { label: "NEUTRO", color: "text-muted-foreground", bg: "bg-muted/40", border: "border-border", icon: Minus },
 };
+
+// Normalize Supabase news to NewsItem-like shape
+function normalizeNews(items: NewsSentiment[]): NewsItem[] {
+  return items.map((n, i) => ({
+    id: String(i),
+    title: n.title || "Sem título",
+    summary: n.impact_text_pt || "",
+    source: n.source || "Desconhecido",
+    sentiment: (n.sentiment === "positivo" || n.sentiment === "positive"
+      ? "positive"
+      : n.sentiment === "negativo" || n.sentiment === "negative"
+        ? "negative"
+        : "neutral") as "positive" | "negative" | "neutral",
+    sentimentScore: Math.min(1, Math.max(0, (n.impact_score || 3) / 5)),
+    isHighImpact: (n.impact_score || 0) >= 4,
+    timeAgo: n.published_at
+      ? formatTimeAgo(n.published_at)
+      : "Recente",
+  }));
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const now = new Date();
+  const d = new Date(dateStr);
+  const diffMs = now.getTime() - d.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffHours < 1) return "Agora";
+  if (diffHours < 24) return `${diffHours}h atrás`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Ontem";
+  if (diffDays < 7) return `${diffDays}d atrás`;
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
 
 function NewsCard({ item, index }: { item: NewsItem; index: number }) {
   const cfg = sentimentConfig[item.sentiment];
@@ -48,7 +82,9 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
           {cfg.label}
         </div>
         <h3 className="text-base font-bold text-foreground leading-snug mb-1.5">{item.title}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">{item.summary}</p>
+        {item.summary && (
+          <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">{item.summary}</p>
+        )}
         <div className="mb-4">
           <div className="flex justify-between items-center mb-1.5">
             <span className="text-micro text-muted-foreground">Impacto</span>
@@ -74,11 +110,28 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
 
 export default function NoticiasPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
-  const filteredNews = mockNews.filter((item) => {
+  const [realNews, setRealNews] = useState<NewsItem[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchNoticiasData()
+      .then((d) => {
+        if (d.news.length > 0) {
+          setRealNews(normalizeNews(d.news));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const news = realNews || mockNews;
+
+  const filteredNews = news.filter((item) => {
     if (activeFilter === "all") return true;
     if (activeFilter === "high_impact") return item.isHighImpact;
     return item.sentiment === activeFilter;
   });
+
   return (
     <PageTransition>
       <main className="w-full pb-24">
@@ -92,7 +145,16 @@ export default function NoticiasPage() {
                 Noticias & Mercado
               </h1>
               <p className="text-muted-foreground mt-2 text-sm">
-                {mockNews.length} materias. Filtradas por relevancia ao mercado de boi gordo.
+                {loading ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Carregando...
+                  </span>
+                ) : (
+                  <>
+                    {news.length} materias. Filtradas por relevancia ao mercado de boi gordo.
+                    {realNews && <span className="text-primary ml-2">● Dados ao vivo</span>}
+                  </>
+                )}
               </p>
             </div>
           </ScrollReveal>

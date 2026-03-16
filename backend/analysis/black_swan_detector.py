@@ -17,9 +17,31 @@ from supabase_client import get_client, upsert
 logger = logging.getLogger(__name__)
 
 CRISIS_KEYWORDS = [
+    # ─── Sanitário / Agro ───
     "embargo", "aftosa", "greve", "férias coletivas",
-    "guerra", "tarifa china", "cota esgotada", "fechamento de fronteira",
     "surto", "doença", "paralisação frigorífico",
+    "raiva bovina", "brucelose", "vaca louca", "eeb",
+    "recall carne", "contaminação", "interdição",
+    # ─── Comércio Exterior ───
+    "tarifa china", "cota esgotada", "fechamento de fronteira",
+    "barreira sanitária", "anti-dumping", "retaliação",
+    "tarifa trump", "tarifa eua", "guerra comercial",
+    "sanção", "bloqueio comercial", "cota hilton",
+    # ─── Geopolítica / Macro ───
+    "guerra", "conflito", "irã", "iran", "oriente médio",
+    "ataque", "míssil", "escalada militar",
+    "recessão", "crise financeira", "bolha",
+    "crédito privado", "default", "calote",
+    "colapso", "crash", "bear market",
+    "fed", "taxa juros eua", "dólar disparou",
+    # ─── Clima Extremo ───
+    "seca extrema", "queimada", "incêndio florestal",
+    "enchente", "inundação", "geada", "la niña", "el niño",
+    "emergência climática", "desastre ambiental",
+    # ─── Logística / Energia ───
+    "greve caminhoneiros", "paralisação rodovias",
+    "falta diesel", "crise energia", "apagão",
+    "porto fechado", "bloqueio logístico",
 ]
 
 

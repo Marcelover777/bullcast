@@ -287,3 +287,151 @@ export async function fetchRegionalData(state = "MT"): Promise<CattleCategory[]>
   const latestDate = data[0].date;
   return data.filter((d) => d.date === latestDate);
 }
+
+// ═══════════════════════════════════════════════════════════
+// DADOS DA PÁGINA RISCOS
+// ═══════════════════════════════════════════════════════════
+
+export interface RiscosData {
+  circuitBreakerLevel: string;
+  volatilityStd: number;
+  crisisEvents: CrisisEvent[];
+  climateAlerts: ClimateData[];
+  latestSignal: TradeSignal | null;
+  exportData: ExportData | null;
+}
+
+export async function fetchRiscosData(): Promise<RiscosData> {
+  const sb = createSupabaseBrowserClient();
+
+  const [signalRes, crisisRes, climateRes, exportRes, spotRes] = await Promise.allSettled([
+    sb.from("trade_signals").select("*").order("date", { ascending: false }).limit(1).single(),
+    sb.from("crisis_events").select("*").order("detected_at", { ascending: false }).limit(10),
+    sb.from("climate_data").select("*").order("date", { ascending: false }).limit(10),
+    sb.from("export_data").select("*").order("date", { ascending: false }).limit(1).single(),
+    sb.from("spot_prices").select("price_per_arroba").eq("state", "SP").order("date", { ascending: false }).limit(22),
+  ]);
+
+  const extract = <T>(r: PromiseSettledResult<{ data: T; error: unknown }>): T | null => {
+    if (r.status === "rejected") return null;
+    if (r.value.error) return null;
+    return r.value.data;
+  };
+
+  const signal = extract<TradeSignal>(signalRes as never);
+  const crisisAll = extract<CrisisEvent[]>(crisisRes as never) || [];
+  const climateAll = extract<ClimateData[]>(climateRes as never) || [];
+  const spots = extract<{ price_per_arroba: number }[]>(spotRes as never) || [];
+
+  // Calculate volatility from spot prices
+  let volatilityStd = 0;
+  if (spots.length >= 5) {
+    const prices = spots.map((s) => s.price_per_arroba);
+    const returns: number[] = [];
+    for (let i = 1; i < prices.length; i++) {
+      returns.push((prices[i - 1] - prices[i]) / prices[i]);
+    }
+    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+    volatilityStd = Math.sqrt(returns.reduce((a, b) => a + (b - mean) ** 2, 0) / returns.length);
+  }
+
+  // Deduplicate climate by state (latest per state)
+  const climateByState: Record<string, ClimateData> = {};
+  for (const c of climateAll) {
+    if (!climateByState[c.state]) climateByState[c.state] = c;
+  }
+
+  return {
+    circuitBreakerLevel: signal?.circuit_breaker_level || "VERDE",
+    volatilityStd: Math.round(volatilityStd * 10000) / 100,
+    crisisEvents: crisisAll,
+    climateAlerts: Object.values(climateByState),
+    latestSignal: signal,
+    exportData: extract<ExportData>(exportRes as never),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// DADOS DA PÁGINA HISTÓRICO
+// ═══════════════════════════════════════════════════════════
+
+export interface HistoricoData {
+  predictions: MLPrediction[];
+  totalPredictions: number;
+  accuracyByHorizon: { horizon: number; total: number; avgAccuracy: number }[];
+  recentSignals: TradeSignal[];
+}
+
+export async function fetchHistoricoData(): Promise<HistoricoData> {
+  const sb = createSupabaseBrowserClient();
+
+  const [predRes, signalRes] = await Promise.allSettled([
+    sb.from("ml_predictions")
+      .select("*")
+      .eq("model_name", "ensemble")
+      .order("created_at", { ascending: false })
+      .limit(90),
+    sb.from("trade_signals")
+      .select("*")
+      .order("date", { ascending: false })
+      .limit(20),
+  ]);
+
+  const extract = <T>(r: PromiseSettledResult<{ data: T; error: unknown }>): T | null => {
+    if (r.status === "rejected") return null;
+    if (r.value.error) return null;
+    return r.value.data;
+  };
+
+  const preds = extract<MLPrediction[]>(predRes as never) || [];
+  const signals = extract<TradeSignal[]>(signalRes as never) || [];
+
+  // Group accuracy by horizon
+  const byHorizon: Record<number, { total: number; accSum: number }> = {};
+  for (const p of preds) {
+    const h = p.horizon_days;
+    if (!byHorizon[h]) byHorizon[h] = { total: 0, accSum: 0 };
+    byHorizon[h].total += 1;
+    byHorizon[h].accSum += Number(p.directional_accuracy || 0);
+  }
+
+  return {
+    predictions: preds,
+    totalPredictions: preds.length,
+    accuracyByHorizon: Object.entries(byHorizon).map(([h, v]) => ({
+      horizon: Number(h),
+      total: v.total,
+      avgAccuracy: v.total > 0 ? Math.round((v.accSum / v.total) * 1000) / 10 : 0,
+    })),
+    recentSignals: signals,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// DADOS DA PÁGINA NOTÍCIAS
+// ═══════════════════════════════════════════════════════════
+
+export interface NoticiasData {
+  news: NewsSentiment[];
+  totalCount: number;
+}
+
+export async function fetchNoticiasData(): Promise<NoticiasData> {
+  const sb = createSupabaseBrowserClient();
+
+  const { data, error } = await sb
+    .from("news_sentiment")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("fetchNoticiasData:", error);
+    return { news: [], totalCount: 0 };
+  }
+
+  return {
+    news: data || [],
+    totalCount: data?.length || 0,
+  };
+}
