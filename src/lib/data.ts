@@ -1,139 +1,289 @@
 // src/lib/data.ts
-// Server-side data fetching functions (SSR via Supabase)
-// Cada função retorna dados reais ou fallback para mock
-// DEVE ser chamado apenas de Server Components (não 'use client').
+// Camada de dados — queries Supabase
+// Duas versões: browser (Client Components) e server (Server Components)
 
-import { createSupabaseServerClient } from "./supabase";
+import { createSupabaseBrowserClient } from "./supabase";
 
-// ── Trade Signal (hero data) ─────────────────────────────
-export async function getLatestSignal() {
-  const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("trade_signals")
-    .select("*")
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
+// ═══════════════════════════════════════════════════════════
+// TIPOS
+// ═══════════════════════════════════════════════════════════
 
-  if (error || !data) return null;
-  return data;
+export type Signal = "BUY" | "SELL" | "HOLD";
+
+export interface TradeSignal {
+  date: string;
+  signal: Signal;
+  confidence: number;
+  price_current: number;
+  price_pred_5d: number | null;
+  price_pred_15d: number | null;
+  price_pred_30d: number | null;
+  recommendation_text: string | null;
+  explanation_text: string | null;
+  trend_text: string | null;
+  duration_text: string | null;
+  volatility_regime: string | null;
+  circuit_breaker_level: string | null;
 }
 
-// ── Spot Price ───────────────────────────────────────────
-export async function getLatestSpotPrice(state = "SP") {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("spot_prices")
-    .select("price_per_arroba,variation_day,variation_week,date")
-    .eq("state", state)
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
-  return data;
+export interface SpotPrice {
+  date: string;
+  state: string;
+  price_per_arroba: number;
+  variation_day: number | null;
+  variation_week: number | null;
 }
 
-// ── Farmer Scores (velocímetros) ─────────────────────────
-export async function getFarmerScores() {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("fundamental_indicators")
-    .select("farmer_momentum,farmer_trend,farmer_direction,bullish_count,bearish_count,neutral_count")
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
-  return data;
+export interface FuturesPrice {
+  date: string;
+  contract_code: string;
+  settle_price: number;
+  maturity_date: string | null;
+  volume: number | null;
 }
 
-// ── B3 Futures ───────────────────────────────────────────
-export async function getB3Futures() {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("futures_prices")
-    .select("contract_code,maturity_date,settle_price")
-    .order("date", { ascending: false })
-    .order("maturity_date", { ascending: true })
-    .limit(8);
-  return data ?? [];
+export interface TechnicalIndicator {
+  date: string;
+  rsi_14: number | null;
+  sma_21: number | null;
+  sma_50: number | null;
+  bb_upper: number | null;
+  bb_mid: number | null;
+  bb_lower: number | null;
+  macd_hist: number | null;
+  atr_14: number | null;
+  stoch_k: number | null;
 }
 
-// ── ML Predictions (apenas ensemble, horizons 5/15/30) ───
-export async function getMlPredictions() {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("ml_predictions")
-    .select("horizon_days,pred_value,pred_lower,pred_upper,confidence")
-    .eq("model_name", "ensemble")
-    .order("created_at", { ascending: false })
-    .limit(3);
-  return data ?? [];
+export interface FundamentalIndicator {
+  date: string;
+  basis: number | null;
+  cycle_phase: string | null;
+  farmer_momentum: number | null;
+  farmer_trend: number | null;
+  seasonal_avg_pct: number | null;
+  trade_ratio_bezerro: number | null;
 }
 
-// ── Climate Data (latest per state, DISTINCT ON via order+limit) ─────────────
-// Supabase JS não suporta DISTINCT ON nativo — busca últimos 25 e filtra por estado no cliente.
-export async function getClimateData() {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("climate_data")
-    .select("state,precipitation_mm,temp_avg,precipitation_anomaly_pct,risk_level,pasture_condition,date")
-    .in("state", ["MT", "MS", "GO", "PA", "MG"])
-    .order("date", { ascending: false })
-    .limit(25);
+export interface MLPrediction {
+  horizon_days: number;
+  pred_value: number;
+  pred_lower: number;
+  pred_upper: number;
+  confidence: number;
+  model_name: string;
+  mape: number;
+  directional_accuracy: number;
+  feature_importance: Record<string, number> | null;
+  created_at: string;
+}
 
-  if (!data) return [];
+export interface CattleCategory {
+  date: string;
+  category: string;
+  weight_min: number | null;
+  weight_max: number | null;
+  price_per_kg: number | null;
+  price_per_head: number | null;
+  variation_day: number | null;
+  variation_week: number | null;
+  state: string;
+}
 
-  // Filtra: pega apenas o registro mais recente por estado
-  const byState = new Map<string, typeof data[0]>();
-  for (const row of data) {
-    if (!byState.has(row.state)) byState.set(row.state, row);
+export interface NewsSentiment {
+  title: string;
+  source: string | null;
+  sentiment: string | null;
+  impact_score: number;
+  impact_text_pt: string | null;
+  published_at: string | null;
+}
+
+export interface MacroData {
+  date: string;
+  usd_brl: number | null;
+  selic_rate: number | null;
+}
+
+export interface ClimateData {
+  date: string;
+  state: string;
+  risk_level: string | null;
+  pasture_condition: string | null;
+  temp_avg: number | null;
+  precipitation_mm: number | null;
+}
+
+export interface CrisisEvent {
+  detected_at: string;
+  event_type: string | null;
+  severity: number | null;
+  description: string | null;
+  circuit_breaker_level: string | null;
+}
+
+export interface SlaughterData {
+  period: string;
+  total_head: number | null;
+  female_head: number | null;
+  female_percent: number | null;
+  state: string;
+}
+
+export interface ExportData {
+  date: string;
+  destination: string | null;
+  volume_tons: number | null;
+  value_usd: number | null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// DADOS COMPLETOS DA PÁGINA MERCADO
+// ═══════════════════════════════════════════════════════════
+
+export interface MercadoData {
+  signal: TradeSignal | null;
+  spot: SpotPrice | null;
+  futures: FuturesPrice | null;
+  technical: TechnicalIndicator | null;
+  fundamental: FundamentalIndicator | null;
+  macro: MacroData | null;
+  climate: ClimateData | null;
+  news: NewsSentiment[];
+  crisis: CrisisEvent | null;
+  slaughter: SlaughterData | null;
+  exports: ExportData | null;
+  predictionAccuracy: { horizon: number; accuracy: number; total: number }[];
+}
+
+export async function fetchMercadoData(): Promise<MercadoData> {
+  const sb = createSupabaseBrowserClient();
+
+  const [
+    signalRes,
+    spotRes,
+    futuresRes,
+    techRes,
+    fundRes,
+    macroRes,
+    climateRes,
+    newsRes,
+    crisisRes,
+    histRes,
+    slaughterRes,
+    exportRes,
+  ] = await Promise.allSettled([
+    sb.from("trade_signals").select("*").order("date", { ascending: false }).limit(1).single(),
+    sb.from("spot_prices").select("date,state,price_per_arroba,variation_day,variation_week").eq("state", "SP").order("date", { ascending: false }).limit(1).single(),
+    sb.from("futures_prices").select("date,contract_code,settle_price,maturity_date,volume").order("date", { ascending: false }).limit(1).single(),
+    sb.from("technical_indicators").select("date,rsi_14,sma_21,sma_50,bb_upper,bb_mid,bb_lower,macd_hist,atr_14,stoch_k").order("date", { ascending: false }).limit(1).single(),
+    sb.from("fundamental_indicators").select("date,basis,cycle_phase,farmer_momentum,farmer_trend,seasonal_avg_pct,trade_ratio_bezerro").order("date", { ascending: false }).limit(1).single(),
+    sb.from("macro_data").select("date,usd_brl,selic_rate").order("date", { ascending: false }).limit(1).single(),
+    sb.from("climate_data").select("date,state,risk_level,pasture_condition,temp_avg,precipitation_mm").eq("state", "MT").order("date", { ascending: false }).limit(1).single(),
+    sb.from("news_sentiment").select("title,source,sentiment,impact_score,impact_text_pt,published_at").gte("impact_score", 2).order("published_at", { ascending: false }).limit(5),
+    sb.from("crisis_events").select("detected_at,event_type,severity,description,circuit_breaker_level").is("resolved_at", null).order("detected_at", { ascending: false }).limit(1).single(),
+    sb.from("ml_predictions").select("horizon_days,directional_accuracy").eq("model_name", "ensemble").order("created_at", { ascending: false }).limit(90),
+    sb.from("slaughter_data").select("period,total_head,female_head,female_percent,state").order("period", { ascending: false }).limit(1).single(),
+    sb.from("export_data").select("date,destination,volume_tons,value_usd").order("date", { ascending: false }).limit(1).single(),
+  ]);
+
+  const extract = <T>(r: PromiseSettledResult<{ data: T; error: unknown }>): T | null => {
+    if (r.status === "rejected") return null;
+    if (r.value.error) return null;
+    return r.value.data;
+  };
+
+  // Calcula acurácia agrupada por horizonte
+  const histData = extract<{ horizon_days: number; directional_accuracy: number }[]>(histRes as never) || [];
+  const byHorizon: Record<number, { total: number; accSum: number }> = {};
+  for (const row of histData) {
+    const h = row.horizon_days;
+    if (!byHorizon[h]) byHorizon[h] = { total: 0, accSum: 0 };
+    byHorizon[h].total += 1;
+    byHorizon[h].accSum += Number(row.directional_accuracy || 0);
   }
-  return Array.from(byState.values());
+  const predictionAccuracy = Object.entries(byHorizon).map(([h, v]) => ({
+    horizon: Number(h),
+    total: v.total,
+    accuracy: Math.round((v.accSum / v.total) * 100),
+  }));
+
+  return {
+    signal: extract<TradeSignal>(signalRes as never),
+    spot: extract<SpotPrice>(spotRes as never),
+    futures: extract<FuturesPrice>(futuresRes as never),
+    technical: extract<TechnicalIndicator>(techRes as never),
+    fundamental: extract<FundamentalIndicator>(fundRes as never),
+    macro: extract<MacroData>(macroRes as never),
+    climate: extract<ClimateData>(climateRes as never),
+    news: extract<NewsSentiment[]>(newsRes as never) || [],
+    crisis: extract<CrisisEvent>(crisisRes as never),
+    slaughter: extract<SlaughterData>(slaughterRes as never),
+    exports: extract<ExportData>(exportRes as never),
+    predictionAccuracy,
+  };
 }
 
-// ── News (latest, high impact) ───────────────────────────
-export async function getLatestNews(limit = 5) {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("news_sentiment")
-    .select("title,url,source,published_at,sentiment,impact_score,impact_text_pt")
-    .gte("impact_score", 2)
-    .order("published_at", { ascending: false })
-    .limit(limit);
-  return data ?? [];
+// ═══════════════════════════════════════════════════════════
+// DADOS DA PÁGINA PREVISÃO
+// ═══════════════════════════════════════════════════════════
+
+export interface PrevisaoData {
+  predictions: MLPrediction[];
+  currentPrice: number | null;
+  predictionAccuracy: { horizon: number; accuracy: number; total: number }[];
 }
 
-// ── Cattle Categories ────────────────────────────────────
-export async function getCattleCategories(state = "SP") {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
+export async function fetchPrevisaoData(): Promise<PrevisaoData> {
+  const sb = createSupabaseBrowserClient();
+
+  const [predRes, spotRes, histRes] = await Promise.allSettled([
+    sb.from("ml_predictions").select("*").eq("model_name", "ensemble").order("created_at", { ascending: false }).limit(3),
+    sb.from("spot_prices").select("price_per_arroba").eq("state", "SP").order("date", { ascending: false }).limit(1).single(),
+    sb.from("ml_predictions").select("horizon_days,directional_accuracy").eq("model_name", "ensemble").order("created_at", { ascending: false }).limit(90),
+  ]);
+
+  const extract = <T>(r: PromiseSettledResult<{ data: T; error: unknown }>): T | null => {
+    if (r.status === "rejected") return null;
+    if (r.value.error) return null;
+    return r.value.data;
+  };
+
+  const histData = extract<{ horizon_days: number; directional_accuracy: number }[]>(histRes as never) || [];
+  const byHorizon: Record<number, { total: number; accSum: number }> = {};
+  for (const row of histData) {
+    const h = row.horizon_days;
+    if (!byHorizon[h]) byHorizon[h] = { total: 0, accSum: 0 };
+    byHorizon[h].total += 1;
+    byHorizon[h].accSum += Number(row.directional_accuracy || 0);
+  }
+
+  return {
+    predictions: extract<MLPrediction[]>(predRes as never) || [],
+    currentPrice: extract<{ price_per_arroba: number }>(spotRes as never)?.price_per_arroba ?? null,
+    predictionAccuracy: Object.entries(byHorizon).map(([h, v]) => ({
+      horizon: Number(h),
+      total: v.total,
+      accuracy: Math.round((v.accSum / v.total) * 100),
+    })),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// DADOS DA PÁGINA REGIONAL
+// ═══════════════════════════════════════════════════════════
+
+export async function fetchRegionalData(state = "MT"): Promise<CattleCategory[]> {
+  const sb = createSupabaseBrowserClient();
+  const { data, error } = await sb
     .from("cattle_categories")
-    .select("category,price_per_kg,price_per_head,variation_day,variation_week,weight_min,weight_max")
+    .select("*")
     .eq("state", state)
     .order("date", { ascending: false })
-    .limit(8);
-  return data ?? [];
-}
-
-// ── Crisis Status ────────────────────────────────────────
-export async function getActiveCrisis() {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("crisis_events")
-    .select("event_type,severity,description,circuit_breaker_level,detected_at")
-    .is("resolved_at", null)
-    .order("detected_at", { ascending: false })
-    .limit(1)
-    .single();
-  return data ?? null;
-}
-
-// ── Historical Predictions (acurácia) ────────────────────
-export async function getHistoricalPredictions() {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase
-    .from("ml_predictions")
-    .select("created_at,horizon_days,pred_value,directional_accuracy,mape")
-    .eq("model_name", "ensemble")
-    .order("created_at", { ascending: false })
-    .limit(20);
-  return data ?? [];
+    .limit(30);
+  if (error) { console.error("fetchRegionalData:", error); return []; }
+  if (!data || data.length === 0) return [];
+  // Apenas o dia mais recente
+  const latestDate = data[0].date;
+  return data.filter((d) => d.date === latestDate);
 }
