@@ -75,8 +75,12 @@ def fetch_weather_forecast() -> None:
                 logger.error("Erro previsão %s: %s", state_code, exc)
 
     if rows:
-        upsert("weather_forecast", rows, ["date", "state"])
-        logger.info("Upsert %d registros weather_forecast", len(rows))
+        try:
+            upsert("weather_forecast", rows, ["date", "state"])
+            logger.info("Upsert %d registros weather_forecast", len(rows))
+        except Exception as exc:
+            # Tabela pode não existir ainda — loga mas não quebra o pipeline
+            logger.error("Erro upsert weather_forecast (tabela existe?): %s", exc)
 
         # Análise de seca para Nova Ubiratã
         _analyze_drought_risk(rows)

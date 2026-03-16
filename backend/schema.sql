@@ -140,7 +140,26 @@ CREATE TABLE IF NOT EXISTS climate_data (
   UNIQUE (date, state)
 );
 
--- 10. PREVISÕES ML
+-- 10. PREVISÃO CLIMÁTICA 7 DIAS
+CREATE TABLE IF NOT EXISTS weather_forecast (
+  id                BIGSERIAL PRIMARY KEY,
+  date              DATE NOT NULL,
+  state             VARCHAR(10) NOT NULL,
+  location_name     VARCHAR(50),
+  forecast_type     VARCHAR(10) DEFAULT '7d',
+  temp_max          NUMERIC(5,2),
+  temp_min          NUMERIC(5,2),
+  temp_avg          NUMERIC(5,2),
+  precipitation_mm  NUMERIC(8,2),
+  precipitation_prob NUMERIC(5,2),
+  wind_max_kmh      NUMERIC(6,2),
+  humidity_avg      NUMERIC(5,2),
+  source            VARCHAR(50) DEFAULT 'OPEN_METEO',
+  created_at        TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (date, state)
+);
+
+-- 11. PREVISÕES ML
 CREATE TABLE IF NOT EXISTS ml_predictions (
   id                  BIGSERIAL PRIMARY KEY,
   created_at          TIMESTAMPTZ DEFAULT NOW(),
@@ -207,6 +226,7 @@ CREATE INDEX IF NOT EXISTS idx_spot_prices_state ON spot_prices(state, date DESC
 CREATE INDEX IF NOT EXISTS idx_futures_date ON futures_prices(date DESC);
 CREATE INDEX IF NOT EXISTS idx_cattle_date ON cattle_categories(date DESC);
 CREATE INDEX IF NOT EXISTS idx_climate_state ON climate_data(state, date DESC);
+CREATE INDEX IF NOT EXISTS idx_weather_forecast_state ON weather_forecast(state, date DESC);
 CREATE INDEX IF NOT EXISTS idx_news_published ON news_sentiment(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_news_impact ON news_sentiment(impact_score DESC);
 CREATE INDEX IF NOT EXISTS idx_signals_date ON trade_signals(date DESC);
@@ -221,6 +241,7 @@ ALTER TABLE macro_data        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE technical_indicators ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fundamental_indicators ENABLE ROW LEVEL SECURITY;
 ALTER TABLE climate_data      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE weather_forecast  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ml_predictions    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE news_sentiment    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trade_signals     ENABLE ROW LEVEL SECURITY;
@@ -236,6 +257,7 @@ CREATE POLICY read_public ON macro_data FOR SELECT USING (true);
 CREATE POLICY read_public ON technical_indicators FOR SELECT USING (true);
 CREATE POLICY read_public ON fundamental_indicators FOR SELECT USING (true);
 CREATE POLICY read_public ON climate_data FOR SELECT USING (true);
+CREATE POLICY read_public ON weather_forecast FOR SELECT USING (true);
 CREATE POLICY read_public ON ml_predictions FOR SELECT USING (true);
 CREATE POLICY read_public ON news_sentiment FOR SELECT USING (true);
 CREATE POLICY read_public ON trade_signals FOR SELECT USING (true);

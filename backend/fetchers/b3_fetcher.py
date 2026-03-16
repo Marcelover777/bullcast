@@ -89,5 +89,13 @@ def fetch_futures(start: date | None = None) -> None:
         })
 
     if rows:
+        # Dedup: agrobr pode retornar linhas duplicadas por (date, contract_code)
+        # Postgres rejeita ON CONFLICT UPDATE com duplicatas no mesmo batch
+        seen: dict[tuple[str, str], int] = {}
+        for idx, r in enumerate(rows):
+            key = (r["date"], r["contract_code"])
+            seen[key] = idx  # último valor ganha
+        rows = [rows[i] for i in sorted(seen.values())]
+
         upsert("futures_prices", rows, ["date", "contract_code"])
         logger.info("Upsert %d registros futures_prices", len(rows))
