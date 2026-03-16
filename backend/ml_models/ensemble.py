@@ -9,7 +9,7 @@ from datetime import date
 import pandas as pd
 
 from . import xgboost_model, prophet_model
-from ..supabase_client import get_client, insert
+from supabase_client import get_client, insert
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,7 @@ from datetime import date, timedelta
 import numpy as np
 import pandas as pd
 
-from ..supabase_client import get_client, upsert
+from supabase_client import get_client, upsert
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ def run_black_swan_detection() -> tuple[str, list[dict]]:
     # Persiste alertas
     # insert() puro — crisis_events não tem chave de conflito natural (é um log de eventos).
     if all_alerts:
-        from ..supabase_client import insert
+        from supabase_client import insert
         rows = [{
             "event_type": a["type"],
             "severity": a["severity"],

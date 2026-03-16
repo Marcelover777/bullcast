@@ -7,7 +7,7 @@ import logging
 
 from transformers import pipeline
 
-from ..supabase_client import get_client, upsert
+from supabase_client import get_client, upsert
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from ..supabase_client import get_client, upsert
+from supabase_client import get_client, upsert
 
 logger = logging.getLogger(__name__)
 

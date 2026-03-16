@@ -10,7 +10,7 @@ from datetime import datetime
 
 import httpx
 
-from ..supabase_client import upsert
+from supabase_client import upsert
 from .base_fetcher import with_retry
 
 logger = logging.getLogger(__name__)

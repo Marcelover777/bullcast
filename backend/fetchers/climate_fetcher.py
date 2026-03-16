@@ -8,7 +8,7 @@ from datetime import date, timedelta
 
 import agrobr
 
-from ..supabase_client import upsert
+from supabase_client import upsert
 from .base_fetcher import with_retry
 
 logger = logging.getLogger(__name__)

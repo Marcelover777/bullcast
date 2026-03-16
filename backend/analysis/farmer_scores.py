@@ -12,7 +12,7 @@ import logging
 
 import pandas as pd
 
-from ..supabase_client import get_client, upsert
+from supabase_client import get_client, upsert
 
 logger = logging.getLogger(__name__)
 
