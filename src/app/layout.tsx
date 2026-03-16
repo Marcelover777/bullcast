@@ -1,34 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Big_Shoulders, Barlow, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GSAPProvider } from "@/providers/gsap-provider";
 import { LenisProvider } from "@/providers/lenis-provider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const bigShoulders = Big_Shoulders({
-  variable: "--font-heading",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-  preload: true,
-});
-
-const barlow = Barlow({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-  preload: true,
-});
-
-const jetbrains = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  display: "swap",
-  preload: false,
-});
+// Fonts loaded via <link> at runtime (avoids build-time Google Fonts fetch)
+const FONT_URLS = [
+  "https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@400;500;600;700;800&display=swap",
+  "https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap",
+];
 
 export const viewport: Viewport = {
   themeColor: "#08080A",
@@ -42,9 +24,16 @@ export const metadata: Metadata = {
   title: "BullCast | Inteligência Pecuária",
   description: "Inteligência preditiva para pecuaristas brasileiros.",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "BullCast",
   },
 };
@@ -57,10 +46,17 @@ export default function RootLayout({
 {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {FONT_URLS.map((url) => (
+          <link key={url} rel="stylesheet" href={url} />
+        ))}
+      </head>
       <body
-        className={`${barlow.variable} ${bigShoulders.variable} ${jetbrains.variable} font-sans antialiased text-foreground bg-background selection:bg-primary/20 selection:text-primary max-w-full overflow-x-hidden relative`}
+        className="font-sans antialiased text-foreground bg-background selection:bg-primary/20 selection:text-primary max-w-full overflow-x-hidden relative"
       >
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark">
           <GSAPProvider>
             <LenisProvider>
               <div className="fixed inset-0 z-[-1] bg-noise mix-blend-multiply opacity-50" aria-hidden="true" />

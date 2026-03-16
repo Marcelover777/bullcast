@@ -20,7 +20,7 @@ export function B3Futures() {
               <span className="relative inline-flex h-2 w-2 bg-primary" />
             </span>
             <span className="text-micro font-semibold uppercase tracking-widest text-primary">
-              Live
+              Ao Vivo
             </span>
           </div>
         </div>

@@ -20,7 +20,7 @@ const config = {
 
 export function RiveSemaphore({ level, className, showLabel = true }: RiveSemaphoreProps) {
   const lightsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const { color, label, glow } = config[level];
+  const { color, label } = config[level];
 
   useEffect(() => {
     lightsRef.current.forEach((el) => {

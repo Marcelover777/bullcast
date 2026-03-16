@@ -36,9 +36,18 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-bull: var(--bull);
+  --color-bear: var(--bear);
+  --color-hold: var(--hold);
 }
 
 :root {
+  /* Font families (loaded via <link> in layout.tsx) */
+  --font-heading: "Big Shoulders", system-ui, sans-serif;
+  --font-inter: "Barlow", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
   /* LIGHT: Premium Agritech / Editorial (Horizon Grove + Langham) */
   --background: #F4F3ED;
   /* Noble Cream */
@@ -75,6 +84,10 @@
   --input: #D8D4C7;
   --ring: var(--primary);
 
+  --bull: #22C55E;
+  --bear: #EF4444;
+  --hold: #F59E0B;
+
   --radius: 0px;
   /* ENFORCED SHARP CORNERS */
 }
@@ -109,6 +122,10 @@
   --destructive-foreground: #FFFFFF;
   --warning: #DBA314;
   --warning-foreground: #FFFFFF;
+
+  --bull: #4ADE80;
+  --bear: #F87171;
+  --hold: #FBBF24;
 
   --border: #222922;
   /* Dark fine grid line */
@@ -200,4 +217,51 @@ html {
 .group-nav-link[aria-current="page"]::after {
   transform: scaleX(1);
   transform-origin: left;
+}
+
+/* ═══ Confidence Bar ═══ */
+.confidence-bar {
+  @apply w-full h-2 bg-muted overflow-hidden;
+}
+
+.confidence-bar-fill {
+  @apply h-full transition-all duration-500;
+}
+
+/* ═══ Display & Label Typography ═══ */
+.text-display {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.text-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+/* ═══ Navigation & Card Utilities ═══ */
+.nav-glass {
+  @apply bg-background/90 backdrop-blur-md border-b border-border;
+}
+
+.card-premium {
+  @apply rounded-none;
+}
+
+.safe-top {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+/* ═══ Animations ═══ */
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }

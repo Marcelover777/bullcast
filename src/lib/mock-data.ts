@@ -420,7 +420,7 @@ export interface PredictionPoint {
   actual?: number;
 }
 
-export const mockPredictionBands: PredictionPoint[] = mockAreaChartData.map((d, i) => ({
+export const mockPredictionBands: PredictionPoint[] = mockAreaChartData.map((d) => ({
   date: d.date,
   predicted: d.value + (Math.random() - 0.5) * 2,
   upper: d.value + 4 + Math.random() * 2,

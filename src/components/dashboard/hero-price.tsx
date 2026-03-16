@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { Bell, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatPercent, getGreeting } from "@/lib/format";
+import { formatBRL, formatPercent, formatConfidence, getGreeting } from "@/lib/format";
 import { mockRecommendation, mockPrices, mockForecasts } from "@/lib/mock-data";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { RiveTrend } from "@/components/animations/rive-trend";
@@ -117,7 +117,7 @@ export function HeroPrice({
           <span className={cn("font-editorial text-xl font-bold tracking-tight", signalStyle.text)}>
             {signal}
           </span>
-          <span className="font-mono text-xs text-muted-foreground">{confidenceValue}% confianca</span>
+          <span className="font-mono text-xs text-muted-foreground">Confiança: {formatConfidence(confidenceValue)}</span>
         </div>
 
         {/* Main price block */}
