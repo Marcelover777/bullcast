@@ -60,7 +60,7 @@ export default function RootLayout({
       <body
         className={`${barlow.variable} ${bigShoulders.variable} ${jetbrains.variable} font-sans antialiased text-foreground bg-background selection:bg-primary/20 selection:text-primary max-w-full overflow-x-hidden relative`}
       >
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark">
           <GSAPProvider>
             <LenisProvider>
               <div className="fixed inset-0 z-[-1] bg-noise mix-blend-multiply opacity-50" aria-hidden="true" />
