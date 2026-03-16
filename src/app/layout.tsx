@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GSAPProvider } from "@/providers/gsap-provider";
 import { LenisProvider } from "@/providers/lenis-provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const playfair = Playfair_Display({
   variable: "--font-heading",
@@ -64,6 +65,7 @@ export default function RootLayout({
             <LenisProvider>
               <div className="fixed inset-0 z-[-1] bg-noise mix-blend-multiply opacity-50" aria-hidden="true" />
               {children}
+              <SpeedInsights />
             </LenisProvider>
           </GSAPProvider>
         </ThemeProvider>
