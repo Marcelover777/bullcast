@@ -6,10 +6,8 @@ import { PageTransition } from '@/components/motion/page-transition'
 import { ScrollReveal } from '@/components/animations/scroll-reveal'
 import { motion } from 'framer-motion'
 import {
-  User,
   MapPin,
   Building2,
-  Phone,
   Sun,
   Moon,
   ChevronRight,

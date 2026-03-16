@@ -16,7 +16,6 @@ import {
   Minus,
   CloudRain,
   Thermometer,
-  Sun,
   Cloud,
   CheckCircle,
   Ship,

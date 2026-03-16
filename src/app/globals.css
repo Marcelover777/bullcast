@@ -43,6 +43,11 @@
 }
 
 :root {
+  /* Font families (loaded via <link> in layout.tsx) */
+  --font-heading: "Big Shoulders", system-ui, sans-serif;
+  --font-inter: "Barlow", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
   /* LIGHT: Premium Agritech / Editorial (Horizon Grove + Langham) */
   --background: #F4F3ED;
   /* Noble Cream */

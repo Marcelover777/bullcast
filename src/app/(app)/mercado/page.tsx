@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import {
-  TrendingUp, TrendingDown, Minus, ChevronRight, ChevronDown,
+  TrendingUp, TrendingDown, Minus, ChevronDown,
   AlertTriangle, Newspaper, CloudRain, Package, Ship, DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ import { RiveGauge } from "@/components/animations/rive-gauge";
 import { SeasonalCalendar } from "@/components/dashboard/seasonal-calendar";
 import { ForwardCurve } from "@/components/dashboard/forward-curve";
 import { ClimateCard } from "@/components/dashboard/climate-card";
-import { NewsPanel } from "@/components/dashboard/news-panel";
 import { CycleCard } from "@/components/dashboard/cycle-card";
 
 // ═══ Signal mapping ═══
@@ -134,7 +133,6 @@ export default function MercadoPage() {
   // Yesterday price calc
   const currentPrice = data.spot ? Number(data.spot.price_per_arroba) : Number(sig.price_current);
   const yesterdayPrice = currentPrice / (1 + (Number(data.spot?.variation_day || 0)));
-  const weekAgoPrice = currentPrice / (1 + (Number(data.spot?.variation_week || 0)));
 
   // Prediction range for 15d
   const pred15d = sig.price_pred_15d ? Number(sig.price_pred_15d) : null;

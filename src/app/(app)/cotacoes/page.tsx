@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { MapPin, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronRight, ArrowRightLeft } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronRight, ArrowRightLeft } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts";
 import { cn } from "@/lib/utils";
-import { fetchRegionalData, fetchMercadoData, type CattleCategory, type FundamentalIndicator } from "@/lib/data";
+import { fetchRegionalData, fetchMercadoData, type CattleCategory } from "@/lib/data";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
 
 // ═══ Types ═══
@@ -131,18 +131,18 @@ export default function CotacoesPage() {
   const [rawCategories, setRawCategories] = useState<CattleCategory[]>(MOCK_CATEGORIES);
   const [selectedState, setSelectedState] = useState("SP");
   const [period, setPeriod] = useState<Period>("hoje");
-  const [showStatePicker, setShowStatePicker] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [usingMock, setUsingMock] = useState(true);
   const [tradeRatio, setTradeRatio] = useState<number | null>(null);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     Promise.all([
       fetchRegionalData(selectedState).catch(() => []),
       fetchMercadoData().catch(() => null),
     ]).then(([regional, mercado]) => {
+      if (cancelled) return;
       if (regional.length > 0) {
         setRawCategories(regional);
         setUsingMock(false);
@@ -153,7 +153,8 @@ export default function CotacoesPage() {
       if (mercado?.fundamental?.trade_ratio_bezerro) {
         setTradeRatio(Number(mercado.fundamental.trade_ratio_bezerro));
       }
-    }).finally(() => setLoading(false));
+    }).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [selectedState]);
 
   // Process rows: match raw data to 8 category definitions

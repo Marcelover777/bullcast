@@ -8,7 +8,6 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import { cn } from "@/lib/utils";
 import { formatBRL, formatConfidence } from "@/lib/format";
 import { mockAreaChartData, mockRecommendation } from "@/lib/mock-data";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
