@@ -75,8 +75,18 @@ def fetch_weather_forecast() -> None:
                 logger.error("Erro previsão %s: %s", state_code, exc)
 
     if rows:
-        upsert("weather_forecast", rows, ["date", "state"])
-        logger.info("Upsert %d registros weather_forecast", len(rows))
+        try:
+            upsert("weather_forecast", rows, ["date", "state"])
+            logger.info("Upsert %d registros weather_forecast", len(rows))
+        except Exception as exc:
+            exc_str = str(exc)
+            if "PGRST205" in exc_str or "weather_forecast" in exc_str:
+                logger.warning(
+                    "Tabela weather_forecast não existe no Supabase. "
+                    "Execute o schema.sql para criá-la. Dados descartados."
+                )
+            else:
+                raise
 
         # Análise de seca para Nova Ubiratã
         _analyze_drought_risk(rows)

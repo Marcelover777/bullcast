@@ -7,6 +7,7 @@ Usa nasa_power.clima_ponto(lat, lon, inicio, fim) que retorna:
 """
 import asyncio
 import logging
+import math
 from datetime import date, timedelta
 
 from supabase_client import upsert
@@ -73,14 +74,25 @@ def fetch_climate(start: date | None = None) -> None:
                     continue
 
             date_str = str(row_date.date()) if hasattr(row_date, "date") else str(row_date)
-            prec = float(row.get("precip_mm") or row.get("PRECTOTCORR") or 0)
+
+            def _safe_float(val, default=0.0):
+                """Converte para float, tratando NaN/Inf/-999 da NASA POWER."""
+                try:
+                    v = float(val or default)
+                    if math.isnan(v) or math.isinf(v) or v <= -999:
+                        return default
+                    return v
+                except (TypeError, ValueError):
+                    return default
+
+            prec = _safe_float(row.get("precip_mm") or row.get("PRECTOTCORR"))
 
             rows.append({
                 "date": date_str,
                 "state": state,
                 "precipitation_mm": round(prec, 1),
-                "temp_avg": round(float(row.get("temp_media") or row.get("T2M") or 0), 1),
-                "temp_max": round(float(row.get("temp_max") or row.get("T2M_MAX") or 0), 1),
+                "temp_avg": round(_safe_float(row.get("temp_media") or row.get("T2M")), 1),
+                "temp_max": round(_safe_float(row.get("temp_max") or row.get("T2M_MAX")), 1),
                 "precipitation_anomaly_pct": 0.0,   # calculado na análise
                 "risk_level": "low",                 # calculado na análise
                 "pasture_condition": "regular",      # calculado na análise

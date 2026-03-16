@@ -140,7 +140,31 @@ CREATE TABLE IF NOT EXISTS climate_data (
   UNIQUE (date, state)
 );
 
--- 10. PREVISÕES ML
+-- 10. PREVISÃO CLIMÁTICA (Open-Meteo 7d)
+CREATE TABLE IF NOT EXISTS weather_forecast (
+  id                  BIGSERIAL PRIMARY KEY,
+  date                DATE NOT NULL,
+  state               VARCHAR(10) NOT NULL,
+  location_name       VARCHAR(50),
+  forecast_type       VARCHAR(10) DEFAULT '7d',
+  temp_max            NUMERIC(5,2),
+  temp_min            NUMERIC(5,2),
+  temp_avg            NUMERIC(5,2),
+  precipitation_mm    NUMERIC(8,2) DEFAULT 0,
+  precipitation_prob  NUMERIC(5,2),
+  wind_max_kmh        NUMERIC(6,2),
+  humidity_avg        NUMERIC(5,2),
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (date, state)
+);
+
+CREATE INDEX IF NOT EXISTS idx_weather_forecast_date ON weather_forecast(date DESC);
+CREATE INDEX IF NOT EXISTS idx_weather_forecast_state ON weather_forecast(state, date DESC);
+
+ALTER TABLE weather_forecast ENABLE ROW LEVEL SECURITY;
+CREATE POLICY read_public ON weather_forecast FOR SELECT USING (true);
+
+-- 11. PREVISÕES ML
 CREATE TABLE IF NOT EXISTS ml_predictions (
   id                  BIGSERIAL PRIMARY KEY,
   created_at          TIMESTAMPTZ DEFAULT NOW(),

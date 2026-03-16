@@ -89,5 +89,13 @@ def fetch_futures(start: date | None = None) -> None:
         })
 
     if rows:
+        # Deduplica por (date, contract_code) — B3 pode retornar linhas duplicadas
+        # no mesmo período, e Supabase ON CONFLICT não aceita duplicatas no mesmo batch
+        seen = {}
+        for r in rows:
+            key = (r["date"], r["contract_code"])
+            seen[key] = r  # último valor prevalece
+        rows = list(seen.values())
+
         upsert("futures_prices", rows, ["date", "contract_code"])
         logger.info("Upsert %d registros futures_prices", len(rows))
