@@ -1,23 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Big_Shoulders, Barlow, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GSAPProvider } from "@/providers/gsap-provider";
 import { LenisProvider } from "@/providers/lenis-provider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const playfair = Playfair_Display({
+const bigShoulders = Big_Shoulders({
   variable: "--font-heading",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
   preload: true,
 });
 
-const inter = Inter({
+const barlow = Barlow({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
   preload: true,
 });
@@ -31,7 +31,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#F4F3ED",
+  themeColor: "#08080A",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -58,9 +58,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} font-sans antialiased text-foreground bg-background selection:bg-primary/20 selection:text-primary max-w-full overflow-x-hidden relative`}
+        className={`${barlow.variable} ${bigShoulders.variable} ${jetbrains.variable} font-sans antialiased text-foreground bg-background selection:bg-primary/20 selection:text-primary max-w-full overflow-x-hidden relative`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <GSAPProvider>
             <LenisProvider>
               <div className="fixed inset-0 z-[-1] bg-noise mix-blend-multiply opacity-50" aria-hidden="true" />
