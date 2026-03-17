@@ -1,8 +1,11 @@
 # backend/fetchers/cepea_fetcher.py
 """
-Busca preços CEPEA via agrobr v1.x (async API):
-  - Spot boi gordo (indicador CEPEA → praça padrão = SP)
-  - Categorias: bezerro, garrote, novilha, vaca gorda, boi magro
+Busca preços CEPEA — estratégia multi-fonte:
+  1. Notícias Agrícolas (via Firecrawl) — fonte primária (contorna Cloudflare)
+  2. agrobr async API — fallback se Firecrawl indisponível
+  3. B3 settle price — último fallback
+
+Categorias: bezerro, vaca gorda (quando disponível no NA)
 """
 import asyncio
 import logging
@@ -16,8 +19,6 @@ from .base_fetcher import with_retry
 logger = logging.getLogger(__name__)
 
 # agrobr v1.0 usa nomes de produto, não estado.
-# O indicador "boi_gordo" do CEPEA já é referência SP.
-# Para outros estados, o CEPEA publica praças separadas quando disponíveis.
 PRODUCTS_BY_STATE = {
     "SP": "boi_gordo",
 }
@@ -37,7 +38,6 @@ def _run_async(coro):
         loop = None
 
     if loop and loop.is_running():
-        # Dentro de event loop existente (raro)
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return pool.submit(asyncio.run, coro).result()
@@ -47,26 +47,47 @@ def _run_async(coro):
 
 @with_retry
 def fetch_spot_prices(start: date | None = None) -> None:
-    """Ingere preços spot CEPEA SP (referência)."""
+    """Ingere preços spot — tenta Notícias Agrícolas primeiro, agrobr depois, B3 por último."""
     end = date.today()
     if start is None:
         start = end - timedelta(days=7)
 
-    logger.info("Buscando spot CEPEA %s → %s", start, end)
+    # ── Fonte 1: Notícias Agrícolas via Firecrawl ──
+    try:
+        from fetchers.noticias_agricolas_scraper import scrape_prices
+        result = scrape_prices()
+        rows = result.get("spot_prices", [])
+        if rows:
+            upsert("spot_prices", rows, ["date", "state"])
+            logger.info("✓ Notícias Agrícolas: upsert %d registros spot_prices", len(rows))
+            return
+        logger.warning("Notícias Agrícolas retornou 0 preços — tentando agrobr")
+    except Exception as exc:
+        logger.warning("Notícias Agrícolas falhou: %s — tentando agrobr", exc)
+
+    # ── Fonte 2: agrobr (CEPEA direto) ──
+    try:
+        _fetch_via_agrobr(start, end)
+        return
+    except Exception as exc:
+        logger.warning("agrobr CEPEA falhou: %s — tentando fallback B3", exc)
+
+    # ── Fonte 3: B3 settle → spot fallback ──
+    _fallback_b3_to_spot(end)
+
+
+def _fetch_via_agrobr(start: date, end: date) -> None:
+    """Busca via agrobr (CEPEA API) — pode dar 403 se Cloudflare bloquear."""
+    logger.info("Buscando spot CEPEA via agrobr %s → %s", start, end)
 
     async def _fetch():
         from agrobr.cepea import indicador
         return await indicador("boi_gordo", inicio=start, fim=end)
 
-    try:
-        df = _run_async(_fetch())
-    except Exception as exc:
-        logger.error("Erro CEPEA boi_gordo: %s", exc)
-        return
+    df = _run_async(_fetch())
 
     if df is None or df.empty:
-        logger.warning("Sem dados CEPEA boi_gordo para o período")
-        return
+        raise RuntimeError("Sem dados CEPEA boi_gordo para o período")
 
     rows = []
     for _, row in df.iterrows():
@@ -90,10 +111,9 @@ def fetch_spot_prices(start: date | None = None) -> None:
 
     if rows:
         upsert("spot_prices", rows, ["date", "state"])
-        logger.info("Upsert %d registros spot_prices", len(rows))
+        logger.info("✓ agrobr CEPEA: upsert %d registros spot_prices", len(rows))
     else:
-        logger.warning("Nenhum registro spot CEPEA — tentando fallback B3")
-        _fallback_b3_to_spot(end)
+        raise RuntimeError("agrobr retornou dados mas nenhum row válido")
 
 
 @with_retry
