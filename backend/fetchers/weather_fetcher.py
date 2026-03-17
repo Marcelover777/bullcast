@@ -4,6 +4,7 @@ Previsão climática 7 dias via Open-Meteo (gratuito, sem API key).
 Foco: Nova Ubiratã, MT (-13.28, -55.26) e praças pecuárias.
 """
 import logging
+import time
 from datetime import date
 
 import httpx
@@ -32,7 +33,9 @@ def fetch_weather_forecast() -> None:
     rows = []
 
     with httpx.Client(timeout=30) as client:
-        for state_code, loc in LOCATIONS.items():
+        for i, (state_code, loc) in enumerate(LOCATIONS.items()):
+            if i > 0:
+                time.sleep(1.5)  # Rate limit: Open-Meteo bloqueia requests simultâneos
             try:
                 resp = client.get(OPEN_METEO_URL, params={
                     "latitude": loc["lat"],

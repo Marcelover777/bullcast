@@ -25,6 +25,31 @@ logging.basicConfig(
 logger = logging.getLogger("run_daily")
 
 
+# ── Proxy patch ──────────────────────────────────────────
+# agrobr cria httpx clients internamente e pode ignorar HTTPS_PROXY.
+# Este patch garante que TODOS os httpx clients usem o proxy configurado.
+_proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+if _proxy_url:
+    import httpx as _httpx
+
+    _OrigClient = _httpx.Client
+    _OrigAsyncClient = _httpx.AsyncClient
+
+    class _ProxiedClient(_OrigClient):
+        def __init__(self, *args, **kwargs):
+            kwargs.setdefault("proxy", _proxy_url)
+            super().__init__(*args, **kwargs)
+
+    class _ProxiedAsyncClient(_OrigAsyncClient):
+        def __init__(self, *args, **kwargs):
+            kwargs.setdefault("proxy", _proxy_url)
+            super().__init__(*args, **kwargs)
+
+    _httpx.Client = _ProxiedClient
+    _httpx.AsyncClient = _ProxiedAsyncClient
+    logger.info("Proxy configurado: %s...%s", _proxy_url[:20], _proxy_url[-10:])
+
+
 def run():
     logger.info("═══ BullCast Pipeline — %s ═══", date.today())
     errors = []
