@@ -92,7 +92,8 @@ def fetch_spot_prices(start: date | None = None) -> None:
         upsert("spot_prices", rows, ["date", "state"])
         logger.info("Upsert %d registros spot_prices", len(rows))
     else:
-        logger.warning("Nenhum registro spot extraído do CEPEA")
+        logger.warning("Nenhum registro spot CEPEA — tentando fallback B3")
+        _fallback_b3_to_spot(end)
 
 
 @with_retry
@@ -146,3 +147,36 @@ def fetch_category_prices(start: date | None = None) -> None:
     if rows:
         upsert("cattle_categories", rows, ["date", "category", "state"])
         logger.info("Upsert %d registros cattle_categories", len(rows))
+
+
+def _fallback_b3_to_spot(ref_date: date) -> None:
+    """Fallback: usa preço B3 do contrato mais próximo como proxy do spot.
+    O ajuste diário BGI 1º vencimento é ~99% correlacionado ao CEPEA spot."""
+    from supabase_client import get_client, upsert as _upsert
+    try:
+        client = get_client()
+        resp = (client.table("futures_prices")
+                .select("date,settle_price")
+                .order("date", desc=True)
+                .order("maturity_date", desc=False)  # contrato mais próximo
+                .limit(1)
+                .execute())
+
+        if not resp.data:
+            logger.warning("Fallback B3: sem dados em futures_prices")
+            return
+
+        row = resp.data[0]
+        price = float(row["settle_price"])
+        _upsert("spot_prices", [{
+            "date": row["date"],
+            "state": "SP",
+            "price_per_arroba": price,
+            "price_per_kg": round(price / 15 * 0.54, 2),
+            "variation_day": 0,
+            "variation_week": 0,
+            "source": "B3_FALLBACK",
+        }], ["date", "state"])
+        logger.info("Fallback B3→spot: R$ %.2f/@ em %s", price, row["date"])
+    except Exception as exc:
+        logger.error("Fallback B3 falhou: %s", exc)

@@ -1,13 +1,12 @@
 # backend/analysis/sentiment.py
 """
-Classifica notícias com FinBERT-PT-BR e calcula impact_score.
-Modelo: 'lucas-leme/FinBERT-PT-BR' (HuggingFace)
+Classifica notícias usando Claude Haiku API e calcula impact_score.
+Substituiu FinBERT-PT-BR (torch ~2.5GB RAM) para rodar no Railway sem OOM.
 """
+import json
 import logging
 
-from transformers import pipeline
-
-from supabase_client import get_client, upsert
+from supabase_client import get_client
 
 logger = logging.getLogger(__name__)
 
@@ -20,19 +19,30 @@ IMPACT_KEYWORDS = {
     "seca": 2, "pastagem": 2, "estiagem": 2,
 }
 
-_classifier = None
+_SENTIMENT_PROMPT = """Classifique o sentimento desta notícia para o mercado de boi gordo brasileiro.
+Responda APENAS com JSON puro (sem markdown):
+{{"label": "POS" ou "NEG" ou "NEU", "score": 0.0 a 1.0}}
+
+Notícia: {text}"""
 
 
-def get_classifier():
-    global _classifier
-    if _classifier is None:
-        logger.info("Carregando FinBERT-PT-BR...")
-        _classifier = pipeline(
-            "text-classification",
-            model="lucas-leme/FinBERT-PT-BR",
-            device=-1,  # CPU
+def _classify_with_claude(text: str) -> tuple[str, float]:
+    """Classifica sentimento via Claude Haiku (leve, rápido, barato)."""
+    from claude_integration import get_claude
+    try:
+        msg = get_claude().messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=50,
+            messages=[{"role": "user", "content": _SENTIMENT_PROMPT.format(text=text[:500])}],
         )
-    return _classifier
+        result = json.loads(msg.content[0].text)
+        label = result["label"].upper()
+        if label not in ("POS", "NEG", "NEU"):
+            label = "NEU"
+        return label, round(float(result["score"]), 3)
+    except Exception as exc:
+        logger.error("Claude sentiment falhou: %s", exc)
+        return "NEU", 0.5
 
 
 def compute_impact_score(text: str) -> int:
@@ -43,17 +53,13 @@ def compute_impact_score(text: str) -> int:
 
 
 def classify_news() -> None:
-    """Busca notícias sem sentimento e classifica."""
+    """Busca notícias sem sentimento e classifica via Claude Haiku."""
     client = get_client()
-    clf = get_classifier()
 
-    # Filtra notícias não processadas: sentiment="NEU" é o valor inicial (news_fetcher).
-    # Após processamento (FinBERT ou fallback), sentiment muda para POS/NEG/NEU com conf > 0.
-    # Não filtrar por confidence==0.0 — o fallback escreve conf=0.5 em NEU, bloqueando reprocesso.
     resp = (client.table("news_sentiment")
             .select("id,title,summary")
             .eq("sentiment", "NEU")
-            .eq("confidence", 0.0)  # 0.0 = ainda não processado (inicial); fallback usa 0.5
+            .eq("confidence", 0.0)
             .limit(20)
             .execute())
 
@@ -61,18 +67,9 @@ def classify_news() -> None:
         logger.info("Nenhuma notícia nova para classificar")
         return
 
-    clf_instance = clf
-
     for news in resp.data:
         text = f"{news['title']}. {news.get('summary', '')}"[:512]
-        try:
-            result = clf_instance(text)[0]
-            label = result["label"].upper()  # POS/NEG/NEU
-            conf  = round(float(result["score"]), 3)
-        except Exception as exc:
-            logger.error("FinBERT falhou para news %s: %s", news["id"], exc)
-            label, conf = "NEU", 0.5
-
+        label, conf = _classify_with_claude(text)
         impact = compute_impact_score(text)
 
         client.table("news_sentiment").update({
@@ -81,4 +78,4 @@ def classify_news() -> None:
             "impact_score": impact,
         }).eq("id", news["id"]).execute()
 
-    logger.info("Classificadas %d notícias", len(resp.data))
+    logger.info("Classificadas %d notícias via Claude Haiku", len(resp.data))

@@ -1,7 +1,11 @@
 # backend/railway.toml
+# NOTA: Se Railway usar este arquivo (root dir = backend/),
+# o Dockerfile path é relativo à raiz do repo.
+# Se Railway usar o railway.toml da raiz, este arquivo é ignorado.
+
 [build]
 dockerfilePath = "backend/Dockerfile"
 
 [deploy]
-startCommand = "python backend/run_daily.py"
+startCommand = "python run_daily.py"
 cronSchedule = "0 18 * * 1-5"

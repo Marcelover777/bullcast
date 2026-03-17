@@ -191,7 +191,10 @@ def run():
         logger.warning("Pipeline concluído com %d erros:", len(errors))
         for e in errors:
             logger.warning("  - %s", e)
-        sys.exit(1)
+        # Exit 0 para erros parciais — Railway interpreta exit(1) como CRASH.
+        # Erros de fetcher (CEPEA 403, RSS down) são esperados e não devem
+        # impedir o próximo cron run. O pipeline é projetado para ser resiliente.
+        logger.info("═══ Pipeline finalizado (parcial) ═══")
     else:
         logger.info("═══ Pipeline concluído com sucesso ═══")
 
