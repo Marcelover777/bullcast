@@ -5,9 +5,24 @@ Usa Claude API para gerar textos em PT-BR para o pecuarista.
 import logging
 import os
 
+import re
+
 import anthropic
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_json(text: str) -> str:
+    """Extrai JSON puro da resposta Claude, removendo markdown fences."""
+    # Remove ```json ... ``` ou ``` ... ```
+    m = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
+    if m:
+        return m.group(1).strip()
+    # Tenta encontrar { ... } direto
+    m = re.search(r"\{[\s\S]*\}", text)
+    if m:
+        return m.group(0)
+    return text.strip()
 
 _client = None
 
@@ -70,7 +85,7 @@ def generate_signal_texts(signal: str, confidence: float, price: float,
             max_tokens=400,
             messages=[{"role": "user", "content": prompt}],
         )
-        return json.loads(msg.content[0].text)
+        return json.loads(_extract_json(msg.content[0].text))
     except Exception as exc:
         logger.error("Claude API falhou para sinal: %s", exc)
         return {

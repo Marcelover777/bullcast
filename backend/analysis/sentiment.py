@@ -5,6 +5,7 @@ Substituiu FinBERT-PT-BR (torch ~2.5GB RAM) para rodar no Railway sem OOM.
 """
 import json
 import logging
+import re
 
 from supabase_client import get_client
 
@@ -35,7 +36,16 @@ def _classify_with_claude(text: str) -> tuple[str, float]:
             max_tokens=50,
             messages=[{"role": "user", "content": _SENTIMENT_PROMPT.format(text=text[:500])}],
         )
-        result = json.loads(msg.content[0].text)
+        raw = msg.content[0].text
+        # Extrai JSON puro (Claude pode retornar ```json ... ```)
+        m = re.search(r"```(?:json)?\s*([\s\S]*?)```", raw)
+        if m:
+            raw = m.group(1).strip()
+        else:
+            m2 = re.search(r"\{[\s\S]*\}", raw)
+            if m2:
+                raw = m2.group(0)
+        result = json.loads(raw)
         label = result["label"].upper()
         if label not in ("POS", "NEG", "NEU"):
             label = "NEU"
