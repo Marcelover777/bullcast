@@ -25,29 +25,33 @@ logging.basicConfig(
 logger = logging.getLogger("run_daily")
 
 
-# ── Proxy patch ──────────────────────────────────────────
-# agrobr cria httpx clients internamente e pode ignorar HTTPS_PROXY.
-# Este patch garante que TODOS os httpx clients usem o proxy configurado.
+# ── Proxy seletivo (só CEPEA) ────────────────────────────
+# O proxy Webshare é datacenter — CEPEA pode ainda bloquear.
+# Removemos HTTPS_PROXY/HTTP_PROXY globais para não afetar Open-Meteo, B3, etc.
+# O proxy é usado APENAS pelo agrobr (CEPEA) via monkey-patch do AsyncClient.
 _proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
 if _proxy_url:
-    import httpx as _httpx
+    # Remove env vars globais — evita que httpx/requests usem proxy automaticamente
+    for _var in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY",
+                 "https_proxy", "http_proxy", "all_proxy"):
+        os.environ.pop(_var, None)
 
-    _OrigClient = _httpx.Client
+    import httpx as _httpx
     _OrigAsyncClient = _httpx.AsyncClient
 
-    class _ProxiedClient(_OrigClient):
+    class _CepeaProxyAsyncClient(_OrigAsyncClient):
+        """AsyncClient com proxy — usado pelo agrobr para CEPEA/Notícias Agrícolas."""
         def __init__(self, *args, **kwargs):
-            kwargs.setdefault("proxy", _proxy_url)
+            if "proxy" not in kwargs:
+                # agrobr cria AsyncClient sem proxy — injeta aqui
+                kwargs["proxy"] = _proxy_url
+            # Desabilita trust_env para não ler env vars (já removidas)
+            kwargs.setdefault("trust_env", False)
             super().__init__(*args, **kwargs)
 
-    class _ProxiedAsyncClient(_OrigAsyncClient):
-        def __init__(self, *args, **kwargs):
-            kwargs.setdefault("proxy", _proxy_url)
-            super().__init__(*args, **kwargs)
-
-    _httpx.Client = _ProxiedClient
-    _httpx.AsyncClient = _ProxiedAsyncClient
-    logger.info("Proxy configurado: %s...%s", _proxy_url[:20], _proxy_url[-10:])
+    _httpx.AsyncClient = _CepeaProxyAsyncClient
+    # NÃO patcha httpx.Client (sync) — usado por weather_fetcher, macro_fetcher, etc.
+    logger.info("Proxy CEPEA configurado (async only): %s...%s", _proxy_url[:20], _proxy_url[-10:])
 
 
 def run():
