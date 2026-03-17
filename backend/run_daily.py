@@ -26,9 +26,9 @@ logger = logging.getLogger("run_daily")
 
 
 # ── Proxy seletivo (só CEPEA) ────────────────────────────
-# O proxy Webshare é datacenter — CEPEA pode ainda bloquear.
+# Proxy Webshare static residential (p.webshare.io:80) — contorna Cloudflare/CEPEA.
 # Removemos HTTPS_PROXY/HTTP_PROXY globais para não afetar Open-Meteo, B3, etc.
-# O proxy é usado APENAS pelo agrobr (CEPEA) via monkey-patch do AsyncClient.
+# O proxy é usado APENAS por AsyncClient (agrobr/CEPEA) e httpx.Client do Firecrawl.
 _proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
 if _proxy_url:
     # Remove env vars globais — evita que httpx/requests usem proxy automaticamente

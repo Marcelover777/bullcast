@@ -1,14 +1,12 @@
 # backend/fetchers/noticias_agricolas_scraper.py
 """
 Scraper de preços de boi gordo via Notícias Agrícolas usando Firecrawl API.
-Fonte alternativa ao CEPEA direto (Cloudflare-blocked).
+Fonte primária — contorna Cloudflare do CEPEA direto.
 
 Extrai:
-  - Indicador CEPEA Esalq/B3 (preço referência SP)
-  - Mercado físico por praça/estado (Scot Consultoria)
-  - Indicadores Datagro por estado
+  - Indicador CEPEA Esalq/B3 (preço referência SP, à vista)
+  - Mercado físico por praça/estado (Scot Consultoria) — boi gordo + vaca gorda
 """
-import json
 import logging
 import os
 import re
@@ -21,19 +19,21 @@ logger = logging.getLogger(__name__)
 FIRECRAWL_API_URL = "https://api.firecrawl.dev/v1/scrape"
 NA_BOI_URL = "https://www.noticiasagricolas.com.br/cotacoes/boi-gordo"
 
-# Mapeamento praça → estado
-PRACA_TO_STATE = {
-    "barretos": "SP", "araçatuba": "SP", "araçatuba": "SP", "presidente prudente": "SP",
-    "são josé do rio preto": "SP", "sp": "SP", "são paulo": "SP",
-    "triângulo": "MG", "triangulo": "MG", "mg": "MG", "minas gerais": "MG",
-    "goiânia": "GO", "goiania": "GO", "go": "GO", "goiás": "GO",
-    "dourados": "MS", "campo grande": "MS", "ms": "MS", "mato grosso do sul": "MS",
-    "cuiabá": "MT", "cuiaba": "MT", "rondonópolis": "MT", "mt": "MT", "mato grosso": "MT",
-    "noroeste": "PR", "pr": "PR", "paraná": "PR", "parana": "PR",
-    "tocantins": "TO", "to": "TO",
-    "rondônia": "RO", "ro": "RO",
-    "pará": "PA", "pa": "PA",
-    "bahia": "BA", "ba": "BA",
+# Mapeamento prefixo praça → UF (Scot usa "SP Barretos", "MG Triângulo" etc.)
+_PREFIX_TO_UF = {
+    "sp": "SP", "mg": "MG", "go": "GO", "ms": "MS", "mt": "MT",
+    "pr": "PR", "sc": "SC", "rs": "RS", "to": "TO", "ro": "RO",
+    "pa": "PA", "ba": "BA", "ma": "MA", "es": "ES", "rj": "RJ",
+    "al": "AL", "ac": "AC", "rr": "RR",
+}
+_CITY_TO_UF = {
+    "barretos": "SP", "araçatuba": "SP", "presidente prudente": "SP",
+    "triângulo": "MG", "triangulo": "MG", "b.horizonte": "MG",
+    "goiânia": "GO", "goiania": "GO",
+    "dourados": "MS", "c. grande": "MS", "três lagoas": "MS",
+    "cuiabá": "MT", "cuiaba": "MT", "rondonópolis": "MT",
+    "noroeste": "PR", "marabá": "PA", "redenção": "PA", "paragominas": "PA",
+    "alagoas": "AL", "acre": "AC", "roraima": "RR",
 }
 
 
@@ -44,24 +44,21 @@ def _get_firecrawl_key() -> str:
     return key
 
 
-def _parse_price(text: str) -> float | None:
-    """Extrai valor numérico de string tipo '346,45' ou '346.45'."""
+def _parse_price_br(text: str) -> float | None:
+    """Converte '346,45' ou '1.234,56' → float. Retorna None se inválido."""
     if not text:
         return None
-    cleaned = text.strip().replace("R$", "").replace(" ", "")
-    # Formato BR: 1.234,56 → 1234.56
+    cleaned = text.strip().replace("R$", "").replace(" ", "").replace("*", "")
     if "," in cleaned:
         cleaned = cleaned.replace(".", "").replace(",", ".")
     try:
-        val = float(cleaned)
-        # Sanity check: preço de boi gordo fica entre 100 e 900 R$/@
-        return val if 50 < val < 1000 else None
+        return float(cleaned)
     except (ValueError, TypeError):
         return None
 
 
 def _parse_variation(text: str) -> float:
-    """Extrai variação percentual de string tipo '-0,04%' ou '+1.5'."""
+    """'-0,04' ou '+1.5%' → float."""
     if not text:
         return 0.0
     cleaned = text.strip().replace("%", "").replace(",", ".").replace("+", "")
@@ -71,18 +68,26 @@ def _parse_variation(text: str) -> float:
         return 0.0
 
 
-def _detect_state(praca: str) -> str:
-    """Detecta o estado a partir do nome da praça."""
-    praca_lower = praca.lower().strip()
-    # Tenta match direto por prefixo de estado (ex: "SP Barretos")
-    for prefix in ("sp", "mg", "go", "ms", "mt", "pr", "to", "ro", "pa", "ba"):
-        if praca_lower.startswith(prefix + " ") or praca_lower == prefix:
-            return prefix.upper()
-    # Tenta match por nome de cidade/região
-    for key, state in PRACA_TO_STATE.items():
-        if key in praca_lower:
-            return state
-    return "SP"  # default
+def _detect_uf(praca: str) -> str | None:
+    """Detecta UF a partir do nome da praça. Retorna None se não identificar."""
+    p = praca.lower().strip().replace("*", "")
+    # Match direto por prefixo "SP Barretos" → SP
+    for prefix, uf in _PREFIX_TO_UF.items():
+        if p.startswith(prefix + " ") or p == prefix:
+            return uf
+    # Match por nome de cidade/região
+    for city, uf in _CITY_TO_UF.items():
+        if city in p:
+            return uf
+    return None
+
+
+def _parse_date_br(text: str) -> date | None:
+    """Converte '16/03/2026' → date."""
+    m = re.search(r"(\d{2})/(\d{2})/(\d{4})", text)
+    if m:
+        return date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+    return None
 
 
 def scrape_prices() -> dict:
@@ -92,11 +97,9 @@ def scrape_prices() -> dict:
     Returns:
         dict com chaves:
           - spot_prices: list[dict] para upsert em spot_prices
-          - category_prices: list[dict] para upsert em cattle_categories (se disponível)
           - raw_markdown: str com o markdown extraído (para debug)
     """
     api_key = _get_firecrawl_key()
-    today = date.today()
 
     logger.info("Scraping Notícias Agrícolas via Firecrawl: %s", NA_BOI_URL)
 
@@ -111,7 +114,7 @@ def scrape_prices() -> dict:
                 "url": NA_BOI_URL,
                 "formats": ["markdown"],
                 "onlyMainContent": True,
-                "waitFor": 3000,  # espera JS carregar tabelas
+                "waitFor": 3000,
             },
         )
         resp.raise_for_status()
@@ -126,8 +129,7 @@ def scrape_prices() -> dict:
 
     logger.info("Firecrawl OK — %d chars de markdown", len(markdown))
 
-    # Parse o markdown para extrair preços
-    spot_rows = _parse_spot_prices(markdown, today)
+    spot_rows = _parse_all_prices(markdown)
 
     return {
         "spot_prices": spot_rows,
@@ -135,121 +137,166 @@ def scrape_prices() -> dict:
     }
 
 
-def _parse_spot_prices(markdown: str, ref_date: date) -> list[dict]:
+def _parse_all_prices(markdown: str) -> list[dict]:
     """
-    Extrai preços spot do markdown do Notícias Agrícolas.
-    Usa Claude Haiku para parsing robusto quando regex falha.
+    Extrai preços do markdown estruturado do Notícias Agrícolas.
+
+    Estratégia:
+      1. Divide por seções (##)
+      2. Para cada seção, identifica o tipo (Indicador CEPEA, Scot, etc.)
+      3. Parseia a tabela correspondente
     """
     rows = []
-    seen_states = set()
+    best_by_state: dict[str, dict] = {}  # UF → melhor row (prioridade: CEPEA > Scot)
 
-    # ── Regex: tabelas markdown com preços ──
-    # Padrão: | Praça | Valor | Variação | ...
-    table_lines = [l.strip() for l in markdown.split("\n") if "|" in l and "---" not in l]
+    sections = re.split(r"\n## ", markdown)
 
-    for line in table_lines:
-        cells = [c.strip() for c in line.split("|") if c.strip()]
-        if len(cells) < 2:
-            continue
+    for section in sections:
+        section_lower = section.lower()
 
-        # Tenta encontrar preço em qualquer célula
-        praca = cells[0]
-        price = None
-        variation = 0.0
+        # ── Indicador CEPEA Esalq/B3 (preço referência SP) ──
+        if "indicador" in section_lower and ("esalq" in section_lower or "cepea" in section_lower) and "bezerro" not in section_lower:
+            row = _parse_indicador_cepea(section)
+            if row:
+                best_by_state["SP"] = row  # CEPEA sempre tem prioridade
 
-        for i, cell in enumerate(cells[1:], 1):
-            p = _parse_price(cell)
-            if p is not None:
-                price = p
-                # Próxima célula pode ser variação
-                if i + 1 < len(cells):
-                    variation = _parse_variation(cells[i + 1])
-                break
+        # ── Mercado Físico - Scot Consultoria ──
+        elif "scot" in section_lower and "mercado" in section_lower:
+            scot_rows = _parse_scot_table(section)
+            for r in scot_rows:
+                uf = r["state"]
+                if uf not in best_by_state:  # não sobrescreve CEPEA
+                    best_by_state[uf] = r
 
-        if price is None:
-            continue
+    rows = list(best_by_state.values())
 
-        state = _detect_state(praca)
-
-        # Se já temos esse estado e é o mesmo dia, pega o de maior confiança (CEPEA > Scot > Datagro)
-        state_key = f"{ref_date}_{state}"
-        if state_key in seen_states:
-            # Atualiza apenas se é Esalq/CEPEA (mais confiável)
-            if "esalq" not in praca.lower() and "cepea" not in praca.lower() and "indicador" not in praca.lower():
-                continue
-
-        seen_states.add(state_key)
-        rows.append({
-            "date": str(ref_date),
-            "state": state,
-            "price_per_arroba": price,
-            "price_per_kg": round(price / 15 * 0.54, 2),
-            "variation_day": variation,
-            "variation_week": 0.0,  # não disponível nesta fonte
-            "source": "NOTICIAS_AGRICOLAS",
-        })
-
-    # Se regex falhou, tenta fallback com Claude
     if not rows:
-        rows = _parse_with_claude(markdown, ref_date)
+        logger.warning("Parser regex não encontrou preços — markdown pode ter mudado de formato")
 
     return rows
 
 
-def _parse_with_claude(markdown: str, ref_date: date) -> list[dict]:
-    """Fallback: usa Claude Haiku para extrair preços do markdown."""
-    try:
-        from claude_integration import get_claude
-    except ImportError:
-        logger.warning("Claude integration não disponível para fallback de parsing")
-        return []
+def _parse_indicador_cepea(section: str) -> dict | None:
+    """Parseia seção do Indicador CEPEA Esalq/B3."""
+    # Procura data na tabela
+    ref_date = None
+    price = None
+    variation = 0.0
 
-    prompt = f"""Extraia os preços de boi gordo deste texto. Para cada preço, retorne:
-- state: sigla do estado (SP, MG, GO, MS, MT, PR, etc)
-- price: valor em R$/arroba (número decimal)
-- variation: variação percentual do dia (número decimal, pode ser negativo)
+    for line in section.split("\n"):
+        if "|" not in line or "---" in line:
+            continue
+        cells = [c.strip() for c in line.split("|") if c.strip()]
+        if len(cells) < 2:
+            continue
 
-Retorne APENAS JSON puro (sem markdown):
-[{{"state": "SP", "price": 346.45, "variation": -0.04}}, ...]
+        # Header line (Data | à vista R$ | Variação)
+        if any(h in cells[0].lower() for h in ("data", "contrato")):
+            continue
+        # "Ver histórico" line
+        if "ver hist" in cells[0].lower() or "atualizado" in cells[0].lower():
+            # Tenta extrair data do "Atualizado em: DD/MM/YYYY"
+            d = _parse_date_br(line)
+            if d and ref_date is None:
+                ref_date = d
+            continue
 
-Texto:
-{markdown[:3000]}"""
+        # Data line: DD/MM/YYYY | preço | variação
+        d = _parse_date_br(cells[0])
+        if d:
+            ref_date = d
+            if len(cells) >= 2:
+                p = _parse_price_br(cells[1])
+                if p and 100 < p < 900:  # sanity: preço por arroba
+                    price = p
+            if len(cells) >= 3:
+                variation = _parse_variation(cells[2])
 
-    try:
-        msg = get_claude().messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=500,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = msg.content[0].text
+    if price is None or ref_date is None:
+        return None
 
-        # Remove markdown fences
-        m = re.search(r"```(?:json)?\s*([\s\S]*?)```", raw)
-        if m:
-            raw = m.group(1).strip()
-        else:
-            m2 = re.search(r"\[[\s\S]*\]", raw)
-            if m2:
-                raw = m2.group(0)
+    return {
+        "date": str(ref_date),
+        "state": "SP",
+        "price_per_arroba": price,
+        "price_per_kg": round(price / 15 * 0.54, 2),
+        "variation_day": variation,
+        "variation_week": 0.0,
+        "source": "CEPEA_NA",
+    }
 
-        items = json.loads(raw)
-        rows = []
-        for item in items:
-            price = float(item.get("price", 0))
-            if price <= 0:
-                continue
-            state = str(item.get("state", "SP")).upper()
-            rows.append({
-                "date": str(ref_date),
-                "state": state,
-                "price_per_arroba": price,
-                "price_per_kg": round(price / 15 * 0.54, 2),
-                "variation_day": float(item.get("variation", 0)),
-                "variation_week": 0.0,
-                "source": "NOTICIAS_AGRICOLAS",
-            })
-        logger.info("Claude parsing extraiu %d preços do markdown", len(rows))
-        return rows
-    except Exception as exc:
-        logger.error("Claude parsing falhou: %s", exc)
-        return []
+
+def _parse_scot_table(section: str) -> list[dict]:
+    """Parseia tabela Scot Consultoria: Município | Boi Gordo à vista | ... | Vaca Gorda."""
+    rows = []
+    ref_date = None
+
+    # Tenta achar data de atualização
+    d = _parse_date_br(section)
+    if d:
+        ref_date = d
+    else:
+        ref_date = date.today()
+
+    # Identifica colunas pelo header
+    boi_col = None
+    vaca_col = None
+    lines = section.split("\n")
+
+    for line in lines:
+        if "|" not in line or "---" in line:
+            continue
+        cells = [c.strip() for c in line.split("|") if c.strip()]
+        if len(cells) < 2:
+            continue
+
+        # Header detection
+        header_line = " ".join(c.lower() for c in cells)
+        if "munic" in header_line or ("boi gordo" in header_line and "vista" in header_line):
+            # Map column indices
+            for i, cell in enumerate(cells):
+                cl = cell.lower()
+                if "boi gordo" in cl and "vista" in cl:
+                    boi_col = i
+                elif "vaca" in cl and "vista" in cl:
+                    vaca_col = i
+            continue
+
+        # Skip metadata lines
+        if "ver hist" in cells[0].lower() or "atualizado" in cells[0].lower() or "preços brutos" in cells[0].lower():
+            continue
+
+        praca = cells[0]
+        uf = _detect_uf(praca)
+        if uf is None:
+            continue
+
+        # Boi Gordo à vista
+        col_idx = boi_col if boi_col is not None else 1
+        if col_idx < len(cells):
+            price = _parse_price_br(cells[col_idx])
+            # RS é em kg, não arroba — converte (1@ ≈ 15kg)
+            if price is not None:
+                if uf == "RS" and price < 50:
+                    price = round(price * 15, 2)  # kg → arroba
+
+                if 100 < price < 900:
+                    rows.append({
+                        "date": str(ref_date),
+                        "state": uf,
+                        "price_per_arroba": price,
+                        "price_per_kg": round(price / 15 * 0.54, 2),
+                        "variation_day": 0.0,
+                        "variation_week": 0.0,
+                        "source": "SCOT_NA",
+                    })
+
+    # Deduplica por estado — pega primeiro (geralmente capital / praça principal)
+    seen = set()
+    unique = []
+    for r in rows:
+        if r["state"] not in seen:
+            seen.add(r["state"])
+            unique.append(r)
+
+    return unique

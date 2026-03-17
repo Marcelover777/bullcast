@@ -53,5 +53,12 @@ prisma/migrations/dev/
 *.pem
 *.secret
 
+# Firecrawl
+.firecrawl/
+
+# Python
+__pycache__/
+*.pyc
+
 # Superpowers
 .superpowers/
