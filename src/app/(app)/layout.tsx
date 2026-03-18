@@ -2,14 +2,15 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { TrendingUp, LayoutList, ShieldAlert, History } from "lucide-react";
 
 const tabs = [
   { href: "/mercado", label: "Mercado", icon: TrendingUp },
-  { href: "/cotacoes", label: "Cotações", icon: LayoutList },
+  { href: "/cotacoes", label: "Cotacoes", icon: LayoutList },
   { href: "/riscos", label: "Riscos", icon: ShieldAlert },
-  { href: "/historico", label: "Histórico", icon: History },
+  { href: "/historico", label: "Historico", icon: History },
 ] as const;
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -38,11 +39,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Bottom Navigation - 3 tabs only */}
+      {/* Bottom Navigation */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border safe-bottom"
         role="navigation"
-        aria-label="Navegação Principal"
+        aria-label="Navegacao Principal"
       >
         <div className="flex">
           {tabs.map((tab) => {
@@ -53,6 +54,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={tab.href}
                 href={tab.href}
+                onClick={() => {
+                  if (typeof navigator !== "undefined" && navigator.vibrate) {
+                    navigator.vibrate(5);
+                  }
+                }}
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center py-3 relative transition-all duration-300",
                   isActive
@@ -62,16 +68,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 aria-current={isActive ? "page" : undefined}
               >
                 {isActive && (
-                  <span className="absolute top-0 left-1/4 right-1/4 h-[2px] bg-primary rounded-full" />
+                  <motion.span
+                    layoutId="tab-indicator"
+                    className="absolute top-0 left-1/4 right-1/4 h-[2px] bg-primary"
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
                 )}
                 <Icon
-                  className={cn("w-5 h-5 mb-1 transition-transform duration-300", isActive && "scale-110")}
+                  className={cn(
+                    "w-5 h-5 mb-1 transition-transform duration-300",
+                    isActive && "scale-110"
+                  )}
                   strokeWidth={isActive ? 2.2 : 1.5}
+                  style={isActive ? { filter: "drop-shadow(0 0 4px var(--primary))" } : undefined}
                 />
-                <span className={cn(
-                  "text-[10px] font-semibold uppercase tracking-wider transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}>
+                <span
+                  className={cn(
+                    "text-[10px] uppercase tracking-wider transition-all duration-300",
+                    isActive
+                      ? "text-primary font-bold"
+                      : "text-muted-foreground font-semibold"
+                  )}
+                >
                   {tab.label}
                 </span>
               </Link>
