@@ -1,6 +1,7 @@
 # backend/Dockerfile
 # Build context: raiz do repositório (Railway passa o contexto da raiz)
-FROM python:3.11-slim AS builder
+# Bookworm (stable) evita problemas com Trixie/testing (502, pacotes renomeados)
+FROM python:3.11-slim-bookworm AS builder
 
 # Build deps para prophet (cmdstanpy/pystan) e pacotes com extensões C
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -15,12 +16,11 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # --- Runtime stage (menor imagem final) ---
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
-# Libs runtime necessárias (libgomp para XGBoost, libstdc++ para prophet)
-# Debian Trixie renomeou libgomp1 → libgomp1t64 (time64 transition)
+# libgomp1 para XGBoost (nome estável no Bookworm)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    $(apt-cache show libgomp1 >/dev/null 2>&1 && echo libgomp1 || echo libgomp1t64) \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
