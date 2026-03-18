@@ -18,8 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.11-slim
 
 # Libs runtime necessárias (libgomp para XGBoost, libstdc++ para prophet)
+# Debian Trixie renomeou libgomp1 → libgomp1t64 (time64 transition)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
+    $(apt-cache show libgomp1 >/dev/null 2>&1 && echo libgomp1 || echo libgomp1t64) \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
