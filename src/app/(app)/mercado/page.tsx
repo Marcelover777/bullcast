@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { fetchMercadoData, type MercadoData, type Signal } from "@/lib/data";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import { PageTransition } from "@/components/motion/page-transition";
+import { PageSkeleton } from "@/components/feedback/page-skeleton";
 import { RiveGauge } from "@/components/animations/rive-gauge";
 import { SeasonalCalendar } from "@/components/dashboard/seasonal-calendar";
 import { ForwardCurve } from "@/components/dashboard/forward-curve";
@@ -115,11 +117,7 @@ export default function MercadoPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-pulse text-primary text-lg">Carregando dados...</div>
-      </div>
-    );
+    return <PageSkeleton variant="mercado" />;
   }
 
   const sig = data.signal!;
@@ -152,6 +150,7 @@ export default function MercadoPage() {
   const basisValue = data.fundamental?.basis ? Number(data.fundamental.basis) : 0;
 
   return (
+    <PageTransition>
     <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
       {/* ═══ BADGE DE DADOS ═══ */}
       {usingMock && (
@@ -182,37 +181,48 @@ export default function MercadoPage() {
         </ScrollReveal>
       )}
 
-      {/* ═══ 2. HERO PRICE ═══ */}
+      {/* ═══ 2. SIGNAL HERO — viewport-dominating ═══ */}
       <ScrollReveal direction="up" delay={0}>
-        <section className="py-2">
-          <p className="text-label text-[9px] mb-2">BOI GORDO · CEPEA/B3 · SP</p>
+        <section className="relative overflow-hidden py-6">
+          {/* Contextual gradient */}
+          <div className={cn(
+            "absolute inset-0 -z-10 opacity-[0.05]",
+            displaySignal === "COMPRAR" ? "bg-gradient-to-b from-bull to-transparent" :
+            displaySignal === "VENDER" ? "bg-gradient-to-b from-bear to-transparent" :
+            "bg-gradient-to-b from-hold to-transparent"
+          )} />
+
+          <p className="text-label text-[9px] mb-3">BOI GORDO · CEPEA/B3 · SP</p>
+
+          {/* Price — dominant display */}
           <div className="flex items-baseline gap-3">
-            <span className="text-5xl font-mono font-bold tabular-nums text-foreground">
+            <span className="text-display text-[56px] sm:text-[64px] font-extrabold leading-none tabular-nums">
               R$ <AnimatedNumber value={currentPrice} decimals={2} />
             </span>
-            <div className="flex items-center gap-1">
-              <span className={cn("text-sm", variationPct >= 0 ? "text-bull" : "text-bear")}>
-                {variationPct >= 0 ? "▲" : "▼"}
-              </span>
-              <span className={cn("text-sm font-bold tabular-nums", variationPct >= 0 ? "text-bull" : "text-bear")}>
-                {variationPct >= 0 ? "+" : ""}{variationPct.toFixed(1)}%
-              </span>
-            </div>
           </div>
+
+          {/* Variation */}
+          <div className="flex items-center gap-2 mt-2">
+            <span className={cn("text-base", variationPct >= 0 ? "text-bull" : "text-bear")}>
+              {variationPct >= 0 ? "▲" : "▼"}
+            </span>
+            <span className={cn("text-base font-bold tabular-nums", variationPct >= 0 ? "text-bull" : "text-bear")}>
+              {variationPct >= 0 ? "+" : ""}{variationPct.toFixed(1)}%
+            </span>
+            <span className="text-xs text-muted-foreground">
+              · Semana: {variationWeekPct >= 0 ? "+" : ""}{variationWeekPct.toFixed(1)}%
+            </span>
+          </div>
+
           <p className="text-xs text-muted-foreground mt-2">
             Ontem: R$ {yesterdayPrice.toFixed(2).replace(".", ",")}
-            {" · "}Semana: {variationWeekPct >= 0 ? "+" : ""}{variationWeekPct.toFixed(1)}%
           </p>
           <p className="text-[10px] text-muted-foreground mt-1">
             Atualizado {sig.date ? new Date(sig.date + "T15:04:00").toLocaleDateString("pt-BR", { day: "numeric", month: "short" }) : "hoje"}
           </p>
-        </section>
-      </ScrollReveal>
 
-      {/* ═══ 3. TREND FORECAST ═══ */}
-      <ScrollReveal direction="up" delay={0.05}>
-        <section className={cn("p-5 border", style.bg, style.border)}>
-          <div className="flex items-center gap-3 mb-3">
+          {/* ── Signal badge + trend inline ── */}
+          <div className={cn("mt-5 flex items-center gap-3")}>
             <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", style.bg)}>
               <style.icon className={cn("w-6 h-6", style.text)} strokeWidth={2.5} />
             </div>
@@ -225,26 +235,26 @@ export default function MercadoPage() {
           </div>
 
           {pred15d && predRange && (
-            <p className="text-sm text-secondary-foreground mb-2">
+            <p className="text-sm text-secondary-foreground mt-3">
               Entre <span className="font-bold tabular-nums">R$ {(pred15d - predRange).toFixed(2).replace(".", ",")}</span> e{" "}
               <span className="font-bold tabular-nums">R$ {(pred15d + predRange).toFixed(2).replace(".", ",")}</span> por arroba
             </p>
           )}
 
           {sig.duration_text && (
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-xs text-muted-foreground mt-1">
               Esse movimento deve durar {sig.duration_text}
             </p>
           )}
 
-          {/* Barra de confiança com texto */}
-          <div>
+          {/* Confidence bar */}
+          <div className="mt-4">
             <div className="flex justify-between mb-1">
               <span className="text-label text-[9px]">CONFIANÇA</span>
               <span className={cn("text-sm font-bold", confLabel.color)}>{confLabel.text}</span>
             </div>
-            <div className="confidence-bar">
-              <div className={cn("confidence-bar-fill", style.barBg)} style={{ width: `${confidencePct}%` }} />
+            <div className="w-full h-2 bg-muted overflow-hidden">
+              <div className={cn("h-full transition-all duration-1000", style.barBg)} style={{ width: `${confidencePct}%` }} />
             </div>
           </div>
         </section>
@@ -481,5 +491,6 @@ export default function MercadoPage() {
         {" · "}Não constitui recomendação de investimento.
       </p>
     </div>
+    </PageTransition>
   );
 }

@@ -6,6 +6,8 @@ import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts";
 import { cn } from "@/lib/utils";
 import { fetchRegionalData, fetchMercadoData, type CattleCategory } from "@/lib/data";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import { PageTransition } from "@/components/motion/page-transition";
+import { PageSkeleton } from "@/components/feedback/page-skeleton";
 
 // ═══ Types ═══
 type Period = "hoje" | "semana" | "mes";
@@ -231,6 +233,7 @@ export default function CotacoesPage() {
   const milhoRatio = boiGordoRow?.pricePerArroba ? Math.round(boiGordoRow.pricePerArroba / 70 * 10) / 10 : 4.5;
 
   return (
+    <PageTransition>
     <div className="px-4 py-6 space-y-5 max-w-2xl mx-auto">
       {/* Badge mock */}
       {usingMock && (
@@ -291,11 +294,7 @@ export default function CotacoesPage() {
       </div>
 
       {/* Loading */}
-      {loading && (
-        <div className="text-center py-8">
-          <div className="animate-pulse text-primary">Carregando cotações...</div>
-        </div>
-      )}
+      {loading && <PageSkeleton variant="cotacoes" />}
 
       {/* ═══ MOBILE: Cards ═══ */}
       {!loading && (
@@ -349,7 +348,7 @@ export default function CotacoesPage() {
                             <AreaChart data={row.sparkline}>
                               <defs>
                                 <linearGradient id={`grad-${row.def.key}`} x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor={variation >= 0 ? "var(--bull)" : "var(--bear)"} stopOpacity={0.3} />
+                                  <stop offset="0%" stopColor={variation >= 0 ? "var(--bull)" : "var(--bear)"} stopOpacity={0.15} />
                                   <stop offset="100%" stopColor={variation >= 0 ? "var(--bull)" : "var(--bear)"} stopOpacity={0} />
                                 </linearGradient>
                               </defs>
@@ -480,7 +479,7 @@ export default function CotacoesPage() {
                                   <AreaChart data={row.sparkline}>
                                     <defs>
                                       <linearGradient id={`grad-desk-${row.def.key}`} x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor={variation >= 0 ? "var(--bull)" : "var(--bear)"} stopOpacity={0.3} />
+                                        <stop offset="0%" stopColor={variation >= 0 ? "var(--bull)" : "var(--bear)"} stopOpacity={0.15} />
                                         <stop offset="100%" stopColor={variation >= 0 ? "var(--bull)" : "var(--bear)"} stopOpacity={0} />
                                       </linearGradient>
                                     </defs>
@@ -578,5 +577,6 @@ export default function CotacoesPage() {
         Última atualização: {latestDate ? new Date(latestDate + "T12:00:00").toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR")}
       </p>
     </div>
+    </PageTransition>
   );
 }
