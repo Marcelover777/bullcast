@@ -166,6 +166,26 @@ project/
 | Auto-lint | After Edit/Write on TS/JS | ESLint --fix |
 | Stop validation | End of task | Type-check + test run (when configs exist) |
 
+## Skill Hub Cross-Reference
+
+Este repo contribui 11 skills para o ecossistema compartilhado:
+- **Strategy**: briefing-strategy, project-architect, marketing-growth
+- **Frontend**: frontend-react
+- **Backend**: backend-api, database-schema
+- **DevOps**: cicd-deploy, observability, testing-patterns
+- **Design**: vibe-design, ui-ux-design
+
+Para o catalogo completo de 73 skills (incluindo skills de outros repos), consulte:
+`../skill-hub/CATALOG.md`
+
+### Skills complementares de outros repos
+| Precisa de | Repo | Skill |
+|-----------|------|-------|
+| Design intelligence (paletas, tipografia) | ui-ux-pro-max-skill | ui-ux-pro-max |
+| E-commerce ops (ads, copy, CRO) | ecommerce-ops | copywriting-persuasivo, facebook-ads, page-cro |
+| Dropshipping BR (agents, workflows) | braza-ofertas | SCOUT, NOVA, COPY, PIXEL, DATA |
+| Dev workflow (TDD, debug, planning) | superpowers | systematic-debugging, test-driven-development |
+
 ## Behavioral Rules
 
 1. **Language**: Respond in Portuguese (BR) by default. Switch if user writes in English.
