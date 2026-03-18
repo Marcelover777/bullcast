@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState } from 'react'
+import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { PageTransition } from '@/components/motion/page-transition'
 import { ScrollReveal } from '@/components/animations/scroll-reveal'
@@ -54,7 +55,8 @@ function Toggle({
 export default function PerfilPage() {
   const [alertas, setAlertas] = useState(true)
   const [relatorio, setRelatorio] = useState(true)
-  const [darkMode, setDarkMode] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === 'dark'
 
   return (
     <PageTransition>
@@ -195,7 +197,7 @@ export default function PerfilPage() {
 
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
-                  {darkMode ? (
+                  {isDark ? (
                     <Moon size={14} className="text-muted-foreground" />
                   ) : (
                     <Sun size={14} className="text-muted-foreground" />
@@ -203,8 +205,8 @@ export default function PerfilPage() {
                   <span className="text-sm">Modo escuro</span>
                 </div>
                 <Toggle
-                  active={darkMode}
-                  onToggle={() => setDarkMode((v) => !v)}
+                  active={isDark}
+                  onToggle={() => setTheme(isDark ? 'light' : 'dark')}
                 />
               </div>
             </div>

@@ -7,6 +7,7 @@ import { mockRiskData } from "@/lib/mock-data";
 import { RiveSemaphore } from "@/components/animations/rive-semaphore";
 import { RiveGauge } from "@/components/animations/rive-gauge";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
+import { PageTransition } from "@/components/motion/page-transition";
 import {
   ShieldAlert,
   AlertTriangle,
@@ -170,6 +171,7 @@ export default function RiscosPage() {
   }
 
   return (
+    <PageTransition>
     <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
       {/* Badge mock */}
       {usingMock && (
@@ -431,5 +433,6 @@ export default function RiscosPage() {
         Dados: CEPEA, B3, BCB, IBGE, NASA · Modelo BullCast · Não constitui recomendação de investimento.
       </p>
     </div>
+    </PageTransition>
   );
 }
