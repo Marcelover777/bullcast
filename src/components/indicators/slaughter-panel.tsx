@@ -14,48 +14,8 @@ import {
 import { ArrowUp, ArrowDown, Minus, Beef } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mockSlaughterData } from "@/lib/mock-data";
+import { PremiumTooltip, premiumAxisConfig, premiumGridConfig } from "@/components/charts/premium-tooltip";
 
-interface SlaughterTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; dataKey: string; color: string }>;
-  label?: string;
-}
-
-function SlaughterTooltipContent({ active, payload, label }: SlaughterTooltipProps) {
-  if (!active || !payload?.length) return null;
-
-  return (
-    <div className="border border-border bg-background p-3 shadow-lg">
-      <p className="text-micro text-muted-foreground mb-2">{label}</p>
-      {payload.map((entry) => {
-        const labels: Record<string, string> = {
-          total: "Total Abates",
-          femalePercent: "% Femeas",
-        };
-        const format =
-          entry.dataKey === "femalePercent"
-            ? `${entry.value.toFixed(1)}%`
-            : entry.value.toLocaleString("pt-BR");
-        return (
-          <div key={entry.dataKey} className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block h-2 w-2"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-xs text-muted-foreground">
-                {labels[entry.dataKey] ?? entry.dataKey}
-              </span>
-            </div>
-            <span className="font-mono text-xs font-semibold tabular-nums">
-              {format}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // Historical average for comparison
 const HISTORICAL_AVG_TOTAL = 790000;
@@ -163,34 +123,24 @@ export function SlaughterPanel() {
             data={mockSlaughterData}
             margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              opacity={0.5}
-            />
+            <CartesianGrid {...premiumGridConfig} />
             <XAxis
               dataKey="week"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
             />
             <YAxis
               yAxisId="total"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
               tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
             />
             <YAxis
               yAxisId="pct"
               orientation="right"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
               tickFormatter={(v: number) => `${v}%`}
               domain={[30, 45]}
             />
-            <Tooltip content={<SlaughterTooltipContent />} />
+            <Tooltip content={<PremiumTooltip prefix="" valueFormatter={(v: number) => v > 100 ? v.toLocaleString("pt-BR") : `${v.toFixed(1)}%`} />} />
             <Bar
               yAxisId="total"
               dataKey="total"
@@ -202,9 +152,10 @@ export function SlaughterPanel() {
               yAxisId="pct"
               type="monotone"
               dataKey="femalePercent"
-              stroke="#F97316"
-              strokeWidth={2}
-              dot={{ r: 3, fill: "#F97316" }}
+              stroke="var(--color-bear)"
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 5, fill: "var(--color-bear)", stroke: "var(--color-background)", strokeWidth: 2 }}
             />
           </ComposedChart>
         </ResponsiveContainer>

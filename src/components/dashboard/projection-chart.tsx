@@ -3,6 +3,7 @@
 import {
   Area,
   AreaChart,
+  CartesianGrid,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -11,29 +12,11 @@ import {
 import { formatBRL, formatConfidence } from "@/lib/format";
 import { mockAreaChartData, mockRecommendation } from "@/lib/mock-data";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
-
-function ChartTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: Array<{ value: number }>;
-  label?: string;
-}) {
-  if (!active || !payload?.length) return null;
-
-  return (
-    <div className="border border-border bg-background px-3 py-2 shadow-lg">
-      <p className="text-micro uppercase tracking-widest text-muted-foreground">
-        {label}
-      </p>
-      <p className="font-mono text-sm font-bold tabular-nums">
-        R$ {formatBRL(payload[0].value)}
-      </p>
-    </div>
-  );
-}
+import {
+  PremiumTooltip,
+  premiumAxisConfig,
+  premiumGridConfig,
+} from "@/components/charts/premium-tooltip";
 
 export function ProjectionChart() {
   const confidence = mockRecommendation.confidence;
@@ -74,46 +57,39 @@ export function ProjectionChart() {
             >
               <defs>
                 <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#92C020" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#92C020" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.15} />
+                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                 </linearGradient>
+                <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="var(--color-primary)" floodOpacity="0.25" />
+                </filter>
               </defs>
+              <CartesianGrid {...premiumGridConfig} />
               <XAxis
                 dataKey="date"
-                axisLine={false}
-                tickLine={false}
-                tick={{
-                  fontSize: 10,
-                  fill: "var(--color-muted-foreground)",
-                  fontFamily: "var(--font-mono)",
-                }}
+                {...premiumAxisConfig}
                 interval="preserveStartEnd"
               />
               <YAxis
                 domain={[yMin, yMax]}
-                axisLine={false}
-                tickLine={false}
-                tick={{
-                  fontSize: 10,
-                  fill: "var(--color-muted-foreground)",
-                  fontFamily: "var(--font-mono)",
-                }}
+                {...premiumAxisConfig}
                 tickFormatter={(v: number) => formatBRL(v, 0)}
               />
               <Tooltip
-                content={<ChartTooltip />}
+                content={<PremiumTooltip />}
                 cursor={{ stroke: "var(--color-border)", strokeDasharray: "4 4" }}
               />
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="#92C020"
-                strokeWidth={2}
+                stroke="var(--color-primary)"
+                strokeWidth={2.5}
                 fill="url(#areaGradient)"
                 dot={false}
+                filter="url(#lineGlow)"
                 activeDot={{
-                  r: 4,
-                  fill: "#92C020",
+                  r: 5,
+                  fill: "var(--color-primary)",
                   stroke: "var(--color-background)",
                   strokeWidth: 2,
                 }}

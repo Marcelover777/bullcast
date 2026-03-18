@@ -16,63 +16,8 @@ import { ArrowDownRight, ArrowUpRight, GitCompareArrows } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatBRL, formatPercent } from "@/lib/format";
 import { mockBasisData } from "@/lib/mock-data";
+import { PremiumTooltip, premiumAxisConfig, premiumGridConfig } from "@/components/charts/premium-tooltip";
 
-interface BasisTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; dataKey: string; color: string }>;
-  label?: string;
-}
-
-function BasisTooltipContent({ active, payload, label }: BasisTooltipProps) {
-  if (!active || !payload?.length) return null;
-
-  const physical = payload.find((p) => p.dataKey === "physical");
-  const futures = payload.find((p) => p.dataKey === "futures");
-  const basis = payload.find((p) => p.dataKey === "basis");
-
-  return (
-    <div className="border border-border bg-background p-3 shadow-lg">
-      <p className="text-micro text-muted-foreground mb-2">{label}</p>
-      <div className="space-y-1">
-        {physical && (
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 bg-blue-500" />
-              <span className="text-xs text-muted-foreground">Fisico</span>
-            </div>
-            <span className="font-mono text-xs font-semibold tabular-nums">
-              R$ {formatBRL(physical.value)}
-            </span>
-          </div>
-        )}
-        {futures && (
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 bg-emerald-500" />
-              <span className="text-xs text-muted-foreground">Futuro</span>
-            </div>
-            <span className="font-mono text-xs font-semibold tabular-nums">
-              R$ {formatBRL(futures.value)}
-            </span>
-          </div>
-        )}
-        {basis && (
-          <div className="flex items-center justify-between gap-4 border-t border-border pt-1 mt-1">
-            <span className="text-xs text-muted-foreground">Basis</span>
-            <span
-              className={cn(
-                "font-mono text-xs font-bold tabular-nums",
-                basis.value >= 0 ? "text-primary" : "text-destructive"
-              )}
-            >
-              R$ {formatBRL(basis.value)}
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export function BasisChart() {
   const latestPoint = mockBasisData[mockBasisData.length - 1];
@@ -179,26 +124,23 @@ export function BasisChart() {
             data={chartData}
             margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              opacity={0.5}
-            />
+            <defs>
+              <filter id="basisGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="var(--color-primary)" floodOpacity="0.2" />
+              </filter>
+            </defs>
+            <CartesianGrid {...premiumGridConfig} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
             />
             <YAxis
               yAxisId="price"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
               domain={["dataMin - 2", "dataMax + 2"]}
             />
             <YAxis yAxisId="basis" orientation="right" hide />
-            <Tooltip content={<BasisTooltipContent />} />
+            <Tooltip content={<PremiumTooltip />} />
             <ReferenceLine
               yAxisId="basis"
               y={0}
@@ -212,7 +154,7 @@ export function BasisChart() {
               type="monotone"
               dataKey="basis"
               fill="var(--color-primary)"
-              fillOpacity={0.15}
+              fillOpacity={0.1}
               stroke="none"
             />
             {/* Physical line */}
@@ -220,18 +162,21 @@ export function BasisChart() {
               yAxisId="price"
               type="monotone"
               dataKey="physical"
-              stroke="#3B82F6"
-              strokeWidth={2}
+              stroke="var(--color-primary)"
+              strokeWidth={2.5}
               dot={false}
+              activeDot={{ r: 5, fill: "var(--color-primary)", stroke: "var(--color-background)", strokeWidth: 2 }}
+              filter="url(#basisGlow)"
             />
             {/* Futures line */}
             <Line
               yAxisId="price"
               type="monotone"
               dataKey="futures"
-              stroke="#10B981"
-              strokeWidth={2}
+              stroke="var(--color-bull)"
+              strokeWidth={2.5}
               dot={false}
+              activeDot={{ r: 5, fill: "var(--color-bull)", stroke: "var(--color-background)", strokeWidth: 2 }}
             />
           </ComposedChart>
         </ResponsiveContainer>

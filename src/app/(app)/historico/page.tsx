@@ -27,6 +27,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { PremiumTooltip, premiumAxisConfig, premiumGridConfig } from "@/components/charts/premium-tooltip";
 
 // ─── Signal Badge ───────────────────────────────────────────────
 const signalConfig = {
@@ -195,36 +196,30 @@ export default function HistoricoPage() {
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={accuracyChartData}>
-                <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" opacity={0.3} />
+                <defs>
+                  <filter id="historicoGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="var(--color-primary)" floodOpacity="0.2" />
+                  </filter>
+                </defs>
+                <CartesianGrid {...premiumGridConfig} />
                 <XAxis
                   dataKey="month"
-                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                  axisLine={false}
-                  tickLine={false}
+                  {...premiumAxisConfig}
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                  axisLine={false}
-                  tickLine={false}
+                  {...premiumAxisConfig}
                   width={30}
                 />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "0px",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: unknown) => [`${value}%`, "Acuracia"]}
-                />
+                <Tooltip content={<PremiumTooltip prefix="" suffix="%" valueFormatter={(v: number) => String(v)} />} />
                 <Line
                   type="monotone"
                   dataKey="accuracy"
-                  stroke="var(--primary)"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: "var(--primary)" }}
-                  activeDot={{ r: 5 }}
+                  stroke="var(--color-primary)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5, fill: "var(--color-primary)", stroke: "var(--color-background)", strokeWidth: 2 }}
+                  filter="url(#historicoGlow)"
                 />
               </LineChart>
             </ResponsiveContainer>

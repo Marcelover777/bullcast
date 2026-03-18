@@ -16,51 +16,8 @@ import {
 import { ArrowUp, ArrowDown, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mockCOTData } from "@/lib/mock-data";
+import { PremiumTooltip, premiumAxisConfig, premiumGridConfig } from "@/components/charts/premium-tooltip";
 
-interface COTTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; dataKey: string; color: string; name: string }>;
-  label?: string;
-}
-
-function COTTooltipContent({ active, payload, label }: COTTooltipProps) {
-  if (!active || !payload?.length) return null;
-
-  return (
-    <div className="border border-border bg-background p-3 shadow-lg max-w-xs">
-      <p className="text-micro text-muted-foreground mb-2">{label}</p>
-      {payload.map((entry) => {
-        const labels: Record<string, string> = {
-          hedgersNet: "Hedgers (Liquido)",
-          speculatorsNet: "Especuladores (Liquido)",
-          netPosition: "Posicao Liquida Total",
-        };
-        return (
-          <div key={entry.dataKey} className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block h-2 w-2"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-xs text-muted-foreground">
-                {labels[entry.dataKey] ?? entry.name}
-              </span>
-            </div>
-            <span className="font-mono text-xs font-semibold tabular-nums">
-              {entry.value.toLocaleString("pt-BR")}
-            </span>
-          </div>
-        );
-      })}
-      <div className="mt-2 border-t border-border pt-2">
-        <p className="text-[10px] leading-tight text-muted-foreground">
-          Hedgers: produtores e frigorificos protegendo preco.
-          Especuladores: fundos buscando lucro direcional.
-        </p>
-      </div>
-    </div>
-  );
-}
 
 export function COTPanel() {
   const chartData = useMemo(
@@ -142,26 +99,18 @@ export function COTPanel() {
             data={chartData}
             margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              opacity={0.5}
-            />
+            <CartesianGrid {...premiumGridConfig} />
             <XAxis
               dataKey="week"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
               tickFormatter={(v: number) =>
                 `${(v / 1000).toFixed(0)}k`
               }
             />
-            <Tooltip content={<COTTooltipContent />} />
+            <Tooltip content={<PremiumTooltip prefix="" valueFormatter={(v: number) => v.toLocaleString("pt-BR")} />} />
             <Legend
               formatter={(value: string) => {
                 const labels: Record<string, string> = {
@@ -185,7 +134,7 @@ export function COTPanel() {
             {/* Hedgers bars */}
             <Bar
               dataKey="hedgersNet"
-              fill="#3B82F6"
+              fill="var(--color-primary)"
               fillOpacity={0.7}
               barSize={16}
               name="hedgersNet"
@@ -193,7 +142,7 @@ export function COTPanel() {
             {/* Speculators bars */}
             <Bar
               dataKey="speculatorsNet"
-              fill="#F97316"
+              fill="var(--color-bear)"
               fillOpacity={0.7}
               barSize={16}
               name="speculatorsNet"
@@ -203,8 +152,9 @@ export function COTPanel() {
               type="monotone"
               dataKey="netPosition"
               stroke="var(--color-foreground)"
-              strokeWidth={2}
+              strokeWidth={2.5}
               dot={false}
+              activeDot={{ r: 5, fill: "var(--color-foreground)", stroke: "var(--color-background)", strokeWidth: 2 }}
               name="netPosition"
             />
           </ComposedChart>

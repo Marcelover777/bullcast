@@ -8,10 +8,16 @@ import {
   Line,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import {
+  PremiumTooltip,
+  premiumAxisConfig,
+  premiumGridConfig,
+} from "@/components/charts/premium-tooltip";
 
 interface ForwardCurveProps {
   className?: string;
@@ -106,50 +112,42 @@ export function ForwardCurve({ className }: ForwardCurveProps) {
       <div className="h-48 mb-6">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
+            <defs>
+              <filter id="curveGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="var(--color-primary)" floodOpacity="0.2" />
+              </filter>
+            </defs>
+            <CartesianGrid {...premiumGridConfig} />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 10, fill: "currentColor" }}
-              tickLine={false}
-              axisLine={{ stroke: "currentColor", opacity: 0.15 }}
-              className="font-mono"
+              {...premiumAxisConfig}
             />
             <YAxis
               domain={[minPrice, maxPrice]}
-              tick={{ fontSize: 10, fill: "currentColor" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
               tickFormatter={(v: number) => formatBRL(v, 0)}
               width={48}
-              className="font-mono"
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: "var(--color-card)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "0px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "12px",
-              }}
-              formatter={(value: unknown) => [
-                `R$ ${formatBRL(value as number)}`,
-                "Preco",
-              ]}
+              content={<PremiumTooltip />}
+              cursor={{ stroke: "var(--color-border)", strokeDasharray: "4 4" }}
             />
             <Line
               type="monotone"
               dataKey="price"
               stroke="var(--color-primary)"
-              strokeWidth={2}
+              strokeWidth={2.5}
+              filter="url(#curveGlow)"
               dot={{
-                r: 4,
-                fill: "var(--color-card)",
+                r: 3,
+                fill: "var(--color-background)",
                 stroke: "var(--color-primary)",
                 strokeWidth: 2,
               }}
               activeDot={{
-                r: 6,
+                r: 5,
                 fill: "var(--color-primary)",
-                stroke: "var(--color-card)",
+                stroke: "var(--color-background)",
                 strokeWidth: 2,
               }}
             />

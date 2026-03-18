@@ -16,55 +16,8 @@ import { cn } from "@/lib/utils";
 import { formatBRL, formatPrice } from "@/lib/format";
 import { mockPredictionBands } from "@/lib/mock-data";
 import { GSAPCounter } from "@/components/animations/gsap-counter";
+import { PremiumTooltip, premiumAxisConfig, premiumGridConfig } from "@/components/charts/premium-tooltip";
 
-interface PredictionTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; dataKey: string; color: string }>;
-  label?: string;
-}
-
-function PredictionTooltipContent({ active, payload, label }: PredictionTooltipProps) {
-  if (!active || !payload?.length) return null;
-
-  return (
-    <div className="border border-border bg-background p-3 shadow-lg">
-      <p className="text-micro text-muted-foreground mb-2">{label}</p>
-      {payload
-        .filter((p) => p.dataKey !== "range")
-        .map((entry) => {
-          const labels: Record<string, string> = {
-            predicted: "Previsao",
-            actual: "Real",
-            upper: "Limite Superior",
-            lower: "Limite Inferior",
-          };
-          return (
-            <div key={entry.dataKey} className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className="inline-block h-2 w-2"
-                  style={{
-                    backgroundColor:
-                      entry.dataKey === "predicted"
-                        ? "var(--color-primary)"
-                        : entry.dataKey === "actual"
-                          ? "var(--color-foreground)"
-                          : "var(--color-muted-foreground)",
-                  }}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {labels[entry.dataKey] ?? entry.dataKey}
-                </span>
-              </div>
-              <span className="font-mono text-xs font-semibold tabular-nums">
-                R$ {formatBRL(entry.value)}
-              </span>
-            </div>
-          );
-        })}
-    </div>
-  );
-}
 
 export function PredictionPanel() {
   // Calculate confidence and bands
@@ -147,24 +100,21 @@ export function PredictionPanel() {
             data={chartData}
             margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              opacity={0.5}
-            />
+            <defs>
+              <filter id="predictionGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="var(--color-primary)" floodOpacity="0.2" />
+              </filter>
+            </defs>
+            <CartesianGrid {...premiumGridConfig} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
               domain={["dataMin - 3", "dataMax + 3"]}
             />
-            <Tooltip content={<PredictionTooltipContent />} />
+            <Tooltip content={<PremiumTooltip />} />
 
             {/* Upper band */}
             <Area
@@ -188,9 +138,11 @@ export function PredictionPanel() {
               type="monotone"
               dataKey="predicted"
               stroke="var(--color-primary)"
-              strokeWidth={2}
+              strokeWidth={2.5}
               strokeDasharray="6 3"
               dot={false}
+              activeDot={{ r: 5, fill: "var(--color-primary)", stroke: "var(--color-background)", strokeWidth: 2 }}
+              filter="url(#predictionGlow)"
             />
 
             {/* Actual prices as dots */}

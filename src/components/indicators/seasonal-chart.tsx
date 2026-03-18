@@ -15,6 +15,7 @@ import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import { mockSeasonalData } from "@/lib/mock-data";
+import { PremiumTooltip, premiumAxisConfig, premiumGridConfig } from "@/components/charts/premium-tooltip";
 
 const MONTHS = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -26,43 +27,6 @@ function getCurrentMonthIndex(): number {
   return now.getMonth(); // 0-based
 }
 
-interface SeasonalTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; dataKey: string; color: string }>;
-  label?: string;
-}
-
-function SeasonalTooltipContent({ active, payload, label }: SeasonalTooltipProps) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="border border-border bg-background p-3 shadow-lg">
-      <p className="text-micro text-muted-foreground mb-2">{label}</p>
-      {payload.map((entry) => {
-        const labels: Record<string, string> = {
-          current: "2026 (Atual)",
-          average5y: "Media 5 Anos",
-          previous: "2025",
-        };
-        return (
-          <div key={entry.dataKey} className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block h-2 w-2"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-xs text-muted-foreground">
-                {labels[entry.dataKey] ?? entry.dataKey}
-              </span>
-            </div>
-            <span className="font-mono text-xs font-semibold tabular-nums">
-              R$ {formatBRL(entry.value)}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export function SeasonalChart() {
   const currentMonthIdx = getCurrentMonthIndex();
@@ -128,25 +92,22 @@ export function SeasonalChart() {
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              opacity={0.5}
-            />
+            <defs>
+              <filter id="seasonalGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="var(--color-primary)" floodOpacity="0.2" />
+              </filter>
+            </defs>
+            <CartesianGrid {...premiumGridConfig} />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              tickLine={false}
-              axisLine={false}
+              {...premiumAxisConfig}
               tickFormatter={(v: number) => `${v}`}
               domain={["dataMin - 5", "dataMax + 5"]}
             />
-            <Tooltip content={<SeasonalTooltipContent />} />
+            <Tooltip content={<PremiumTooltip />} />
             <ReferenceLine
               x={currentMonth}
               stroke="var(--color-primary)"
@@ -186,6 +147,7 @@ export function SeasonalChart() {
               dataKey="current"
               stroke="var(--color-primary)"
               strokeWidth={2.5}
+              filter="url(#seasonalGlow)"
               dot={(props: Record<string, unknown>) => {
                 const { cx, cy, payload } = props as {
                   cx: number;

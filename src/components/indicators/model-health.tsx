@@ -212,7 +212,7 @@ export function ModelHealth() {
                 type="monotone"
                 dataKey="value"
                 stroke="var(--color-primary)"
-                strokeWidth={1.5}
+                strokeWidth={2}
                 dot={false}
               />
             </LineChart>
