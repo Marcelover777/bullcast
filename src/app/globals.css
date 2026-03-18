@@ -51,42 +51,53 @@
   /* LIGHT: Premium Agritech / Editorial (Horizon Grove + Langham) */
   --background: #F4F3ED;
   /* Noble Cream */
-  --foreground: #181C18;
-  /* Deep Architectural Forest Black */
-  --card: #F4F3ED;
-  --card-foreground: #181C18;
-  --popover: #F4F3ED;
-  --popover-foreground: #181C18;
+  --foreground: #1C1917;
+  /* Warm Black */
+  --card: #FFFFFF;
+  --card-hover: #FAFAF7;
+  --elevated: #FFFFFF;
+  --card-foreground: #1C1917;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
 
-  --primary: #92C020;
-  /* Serenaai vibrant green ONLY for strategic micro-accents */
-  --primary-foreground: #181C18;
+  --primary: #2D6A4F;
+  /* Deep Forest Green — trust + agriculture */
+  --primary-foreground: #FFFFFF;
 
   --secondary: #EBE9E0;
   /* Slightly darker cream for contrast blocks */
   --secondary-foreground: #384238;
 
   --muted: #EBE9E0;
-  --muted-foreground: #7D857D;
+  --muted-foreground: #78716C;
 
   --accent: #2C3E2D;
   /* Deep Forest Green for structural accents */
   --accent-foreground: #F4F3ED;
 
   /* Indicators */
-  --destructive: #A13C3C;
+  --destructive: #B91C1C;
   --destructive-foreground: #FFFFFF;
-  --warning: #B38600;
+  --warning: #A16207;
   --warning-foreground: #FFFFFF;
 
-  --border: #D8D4C7;
+  --border: #D6D3CC;
   /* Fine architectural grid line color */
-  --input: #D8D4C7;
+  --border-hover: #C5C2BB;
+  --input: #D6D3CC;
   --ring: var(--primary);
 
-  --bull: #22C55E;
-  --bear: #EF4444;
-  --hold: #F59E0B;
+  --bull: #15803D;
+  --bear: #B91C1C;
+  --hold: #A16207;
+
+  --background-rgb: 244, 243, 237;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-glow: none;
+  --info: #1D4ED8;
+  --success: #15803D;
 
   --radius: 0px;
   /* ENFORCED SHARP CORNERS */
@@ -98,7 +109,9 @@
   /* Deepest Forest Black */
   --foreground: #E5E5D8;
   /* Ivory off-white */
-  --card: #0B0E0B;
+  --card: #111611;
+  --card-hover: #161B16;
+  --elevated: #1A201A;
   --card-foreground: #E5E5D8;
   --popover: #0B0E0B;
   --popover-foreground: #E5E5D8;
@@ -112,7 +125,7 @@
   --secondary-foreground: #A1A8A1;
 
   --muted: #141A14;
-  --muted-foreground: #848C84;
+  --muted-foreground: #8A8A7A;
 
   --accent: #E5E5D8;
   /* Inverse for accents */
@@ -129,8 +142,17 @@
 
   --border: #222922;
   /* Dark fine grid line */
+  --border-hover: #2D352D;
   --input: #222922;
   --ring: var(--primary);
+
+  --background-rgb: 11, 14, 11;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 20px rgba(163, 216, 36, 0.15);
+  --info: #60A5FA;
+  --success: #4ADE80;
 }
 
 @layer base {
@@ -249,7 +271,15 @@ html {
 }
 
 .card-premium {
-  @apply rounded-none;
+  @apply rounded-none transition-transform duration-150;
+}
+.card-premium:active {
+  transform: scale(0.98);
+}
+
+.font-editorial {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
 }
 
 .safe-top {
