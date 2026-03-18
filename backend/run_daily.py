@@ -25,33 +25,16 @@ logging.basicConfig(
 logger = logging.getLogger("run_daily")
 
 
-# ── Proxy seletivo (só CEPEA) ────────────────────────────
-# Proxy Webshare static residential (p.webshare.io:80) — contorna Cloudflare/CEPEA.
-# Removemos HTTPS_PROXY/HTTP_PROXY globais para não afetar Open-Meteo, B3, etc.
-# O proxy é usado APENAS por AsyncClient (agrobr/CEPEA) e httpx.Client do Firecrawl.
-_proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
-if _proxy_url:
-    # Remove env vars globais — evita que httpx/requests usem proxy automaticamente
-    for _var in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY",
-                 "https_proxy", "http_proxy", "all_proxy"):
-        os.environ.pop(_var, None)
-
-    import httpx as _httpx
-    _OrigAsyncClient = _httpx.AsyncClient
-
-    class _CepeaProxyAsyncClient(_OrigAsyncClient):
-        """AsyncClient com proxy — usado pelo agrobr para CEPEA/Notícias Agrícolas."""
-        def __init__(self, *args, **kwargs):
-            if "proxy" not in kwargs:
-                # agrobr cria AsyncClient sem proxy — injeta aqui
-                kwargs["proxy"] = _proxy_url
-            # Desabilita trust_env para não ler env vars (já removidas)
-            kwargs.setdefault("trust_env", False)
-            super().__init__(*args, **kwargs)
-
-    _httpx.AsyncClient = _CepeaProxyAsyncClient
-    # NÃO patcha httpx.Client (sync) — usado por weather_fetcher, macro_fetcher, etc.
-    logger.info("Proxy CEPEA configurado (async only): %s...%s", _proxy_url[:20], _proxy_url[-10:])
+# ── Limpeza de proxy ──────────────────────────────────────
+# Proxy NÃO é mais necessário: Firecrawl é a fonte primária de preços CEPEA
+# e faz scraping server-side (sem precisar de proxy no nosso lado).
+# O proxy Webshare causava 402 Payment Required no B3, NASA e CEPEA direto
+# porque o monkey-patch de AsyncClient afetava TODO tráfego async (agrobr).
+# Removemos todas as env vars de proxy para garantir conexão direta.
+for _var in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY",
+             "https_proxy", "http_proxy", "all_proxy"):
+    os.environ.pop(_var, None)
+logger.info("Proxy removido — Firecrawl é fonte primária CEPEA, conexão direta para B3/NASA/APIs")
 
 
 def run():
