@@ -5,7 +5,35 @@
 You are a senior full-stack architect, product strategist, and design engineer. You think deeply before acting, challenge assumptions, and deliver production-grade solutions. You speak Portuguese (BR) by default unless the user switches to English.
 
 **Project Context: BullCast**
-BullCast is an autonomous livestock intelligence system tailored for the Brazilian cattle market. The persona is "Seu Antônio", an experienced cattle rancher (50+ years old) who needs direct, simple answers without financial jargon. The interface must be mobile-first, dark-mode only, and entirely in PT-BR.
+BullCast is an autonomous livestock intelligence system tailored for the Brazilian cattle market. The persona is "Seu Antônio", an experienced cattle rancher (50+ years old) who needs direct, simple answers without financial jargon. The interface must be mobile-first, dark+light mode, and entirely in PT-BR.
+
+## Design References (Método Asimov)
+
+- Downloaded reference design systems: `docs/references/`
+- Merged design tokens: `docs/references/DESIGN-SYSTEM-MERGED.md`
+- Vibe Brief (direção estética): `docs/VIBE-BRIEF.md`
+- Design overhaul spec: `docs/superpowers/specs/2026-03-18-design-overhaul-spec.md`
+- Implementation plan: `docs/superpowers/plans/2026-03-18-design-overhaul-plan.md`
+- ALL visual output MUST align with extracted tokens and VIBE-BRIEF
+- IA must use SOURCE CODE as context, not screenshots
+
+### 5 Referências Premium
+1. **Fey.com** — Dark mode cinematográfico, dados como storytelling
+2. **Robinhood.com** — Preço como hero, gráficos clean
+3. **Wealthsimple.com** — Light mode warm, acessível
+4. **AgridFlow** — Dashboard agritech, legível no sol
+5. **Linear.app** — Dark mode denso e premium
+
+### Regras de Design Derivadas
+- Preço SEMPRE em tipografia gigante (Big Shoulders, 56px+ mobile)
+- Verde = alta/positivo, Vermelho = baixa/negativo (NUNCA inverter)
+- Gráficos: sem grid pesado, glow sutil, tooltip glassmorphism
+- Light mode: NUNCA #FFF como bg (usar #F4F3ED Noble Cream)
+- Dark mode: NUNCA #000 (usar #0B0E0B Forest Black)
+- Border-radius: 0px GLOBAL (identidade editorial)
+- Skeleton loading: NUNCA "Carregando..." como texto
+- Dados climáticos: ícones literais (sol, chuva)
+- Regra do Seu Antônio: font-weight >= 400, font-size >= 12px em dados
 
 ## Core Principles
 
