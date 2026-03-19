@@ -83,8 +83,8 @@ def synthetic_feature_df(synthetic_spot_prices):
     df["futures_volume"] = np.random.randint(1000, 10000, len(df))
     df["countdown_cota_china"] = np.random.randint(0, 365, len(df))
 
-    # Drop the original price_per_arroba to avoid confusion
-    df = df.drop(columns=["price_per_arroba"])
+    # Drop non-numeric columns that would break ML models
+    df = df.drop(columns=["price_per_arroba", "state"])
 
     return df.dropna()
 
