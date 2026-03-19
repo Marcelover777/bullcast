@@ -1,0 +1,8 @@
+# Includes everything from requirements.txt plus training dependencies
+-r requirements.txt
+# Deep Learning (GHA only — NOT Railway)
+neuralforecast>=1.7.0
+lightning>=2.0.0
+torch>=2.0.0
+onnx>=1.15.0
+optuna>=3.6.0

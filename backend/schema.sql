@@ -220,6 +220,80 @@ CREATE TABLE IF NOT EXISTS crisis_events (
   resolved_at           TIMESTAMPTZ
 );
 
+-- 14. FOCOS DE CALOR INPE (ML v2)
+CREATE TABLE IF NOT EXISTS fire_hotspots (
+  id             BIGSERIAL PRIMARY KEY,
+  date           DATE NOT NULL,
+  state          VARCHAR(2) NOT NULL,
+  hotspot_count  INTEGER NOT NULL,
+  risk_level     VARCHAR(10),
+  source         VARCHAR(20) DEFAULT 'INPE',
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (date, state)
+);
+
+-- 15. ÍNDICE DE PASTAGEM NDVI (ML v2)
+CREATE TABLE IF NOT EXISTS ndvi_pasture (
+  id           BIGSERIAL PRIMARY KEY,
+  date         DATE NOT NULL,
+  state        VARCHAR(2) NOT NULL,
+  ndvi_value   NUMERIC(6,4),
+  ndvi_anomaly NUMERIC(6,4),
+  source       VARCHAR(20) DEFAULT 'MODIS',
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (date, state)
+);
+
+-- 16. QUOTA DE EXPORTAÇÃO CHINA (ML v2)
+CREATE TABLE IF NOT EXISTS china_quota_tracking (
+  id               BIGSERIAL PRIMARY KEY,
+  date             DATE NOT NULL,
+  month_volume_tons NUMERIC(12,2),
+  ytd_volume_tons  NUMERIC(12,2),
+  quota_total_tons NUMERIC(12,2) NOT NULL,
+  quota_usage_pct  NUMERIC(5,2),
+  source           VARCHAR(20) DEFAULT 'COMEXSTAT',
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (date)
+);
+
+-- 17. PREDIÇÕES INDIVIDUAIS — alimenta meta-learner (ML v2)
+CREATE TABLE IF NOT EXISTS model_predictions_raw (
+  id           BIGSERIAL PRIMARY KEY,
+  date         DATE NOT NULL,
+  model_name   VARCHAR(30) NOT NULL,
+  horizon_days SMALLINT NOT NULL,
+  pred_value   NUMERIC(10,2),
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (date, model_name, horizon_days)
+);
+
+-- 18. PERFORMANCE DOS MODELOS (ML v2)
+CREATE TABLE IF NOT EXISTS model_performance (
+  id                    BIGSERIAL PRIMARY KEY,
+  date                  DATE NOT NULL,
+  model_name            VARCHAR(30) NOT NULL,
+  horizon_days          SMALLINT NOT NULL,
+  mape                  NUMERIC(6,4),
+  directional_accuracy  NUMERIC(5,3),
+  meta_learner_weight   NUMERIC(5,3),
+  created_at            TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (date, model_name, horizon_days)
+);
+
+-- NOVOS CAMPOS trade_signals (ML v2)
+ALTER TABLE trade_signals
+  ADD COLUMN IF NOT EXISTS risk_alert TEXT,
+  ADD COLUMN IF NOT EXISTS confidence_note TEXT,
+  ADD COLUMN IF NOT EXISTS factors_summary JSONB,
+  ADD COLUMN IF NOT EXISTS score_ml NUMERIC(5,1),
+  ADD COLUMN IF NOT EXISTS score_technical NUMERIC(5,1),
+  ADD COLUMN IF NOT EXISTS score_fundamental NUMERIC(5,1),
+  ADD COLUMN IF NOT EXISTS score_sentiment NUMERIC(5,1),
+  ADD COLUMN IF NOT EXISTS score_climate NUMERIC(5,1),
+  ADD COLUMN IF NOT EXISTS interval_lower NUMERIC(10,2),
+  ADD COLUMN IF NOT EXISTS interval_upper NUMERIC(10,2);
+
 -- ÍNDICES
 CREATE INDEX IF NOT EXISTS idx_spot_prices_date ON spot_prices(date DESC);
 CREATE INDEX IF NOT EXISTS idx_spot_prices_state ON spot_prices(state, date DESC);
@@ -246,6 +320,11 @@ ALTER TABLE ml_predictions    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE news_sentiment    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trade_signals     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crisis_events     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fire_hotspots          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ndvi_pasture           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE china_quota_tracking   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE model_predictions_raw  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE model_performance      ENABLE ROW LEVEL SECURITY;
 
 -- POLÍTICAS DE LEITURA PÚBLICA
 CREATE POLICY read_public ON spot_prices FOR SELECT USING (true);
@@ -262,6 +341,11 @@ CREATE POLICY read_public ON ml_predictions FOR SELECT USING (true);
 CREATE POLICY read_public ON news_sentiment FOR SELECT USING (true);
 CREATE POLICY read_public ON trade_signals FOR SELECT USING (true);
 CREATE POLICY read_public ON crisis_events FOR SELECT USING (true);
+CREATE POLICY read_public ON fire_hotspots FOR SELECT USING (true);
+CREATE POLICY read_public ON ndvi_pasture FOR SELECT USING (true);
+CREATE POLICY read_public ON china_quota_tracking FOR SELECT USING (true);
+CREATE POLICY read_public ON model_predictions_raw FOR SELECT USING (true);
+CREATE POLICY read_public ON model_performance FOR SELECT USING (true);
 
 -- VIEW: Dashboard Latest
 CREATE OR REPLACE VIEW dashboard_latest AS
@@ -291,7 +375,17 @@ SELECT
   ts.circuit_breaker_level,
   ts.price_pred_5d,
   ts.price_pred_15d,
-  ts.price_pred_30d
+  ts.price_pred_30d,
+  ts.risk_alert,
+  ts.confidence_note,
+  ts.factors_summary,
+  ts.score_ml,
+  ts.score_technical,
+  ts.score_fundamental,
+  ts.score_sentiment,
+  ts.score_climate,
+  ts.interval_lower,
+  ts.interval_upper
 FROM spot_prices sp
 LEFT JOIN macro_data m ON m.date = sp.date
 LEFT JOIN fundamental_indicators fi ON fi.date = sp.date
