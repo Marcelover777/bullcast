@@ -46,9 +46,19 @@ def compute_fundamental_indicators() -> None:
 
     basis = round(fut_price - spot_price, 2)
 
-    # 2. Ciclo pecuário (mock até dados IBGE disponíveis)
-    # % fêmeas em ~47% = retenção = RETENCAO
-    female_pct = 47.0
+    # 2. Ciclo pecuário — dados reais IBGE
+    sla_resp = (client.table("slaughter_data")
+                .select("female_percent")
+                .order("period", desc=True)
+                .limit(1)
+                .execute())
+
+    if sla_resp.data and sla_resp.data[0].get("female_percent"):
+        female_pct = float(sla_resp.data[0]["female_percent"])
+    else:
+        female_pct = 47.0  # fallback until IBGE data available
+        logger.warning("Usando female_pct fallback (47%%) — IBGE sem dados")
+
     if female_pct > 52:
         cycle_phase = "LIQUIDACAO"
     elif female_pct < 48:

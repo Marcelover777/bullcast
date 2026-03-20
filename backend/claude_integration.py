@@ -96,6 +96,63 @@ def generate_signal_texts(signal: str, confidence: float, price: float,
         }
 
 
+PROMPT_ANALYST_V2 = """
+Você é o analista-chefe do BullCast, sistema de inteligência pecuária.
+Seu público é o Seu Antônio, pecuarista de 50+ anos que quer respostas diretas.
+
+Analise TODOS os dados abaixo e gere uma análise completa em PT-BR simples.
+NÃO use jargão financeiro. Fale como se estivesse na porteira da fazenda.
+
+{context_json}
+
+Gere JSON com:
+{{
+  "recommendation_text": "frase direta do que fazer (max 80 chars)",
+  "explanation_text": "2-3 frases explicando POR QUÊ, citando fatores concretos (max 300 chars)",
+  "trend_text": "o que esperar nas próximas semanas (max 100 chars)",
+  "duration_text": "quanto tempo esse cenário deve durar (max 80 chars)",
+  "risk_alert": "principal risco a ficar de olho (max 100 chars)" ou null,
+  "confidence_note": "frase sobre o quanto confiar nessa previsão (max 100 chars)",
+  "factors_summary": ["fator 1 que pesou", "fator 2", "fator 3"]
+}}
+"""
+
+
+def generate_signal_texts_v2(analyst_context: dict) -> dict:
+    """Claude Analyst v2 — full context analysis."""
+    import json
+    context_json = json.dumps(analyst_context, ensure_ascii=False, default=str)
+    prompt = PROMPT_ANALYST_V2.format(context_json=context_json)
+
+    # Try Opus, fallback to Sonnet
+    for model in ["claude-opus-4-6", "claude-sonnet-4-5-20250514"]:
+        try:
+            msg = get_claude().messages.create(
+                model=model,
+                max_tokens=600,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            result = json.loads(_extract_json(msg.content[0].text))
+            # Ensure all fields present
+            defaults = {
+                "recommendation_text": "Análise em andamento.",
+                "explanation_text": "", "trend_text": "", "duration_text": "",
+                "risk_alert": None, "confidence_note": "",
+                "factors_summary": [],
+            }
+            return {**defaults, **result}
+        except Exception as exc:
+            logger.error("Claude %s falhou: %s", model, exc)
+            continue
+
+    return {
+        "recommendation_text": "Análise temporariamente indisponível.",
+        "explanation_text": "", "trend_text": "", "duration_text": "",
+        "risk_alert": None, "confidence_note": "",
+        "factors_summary": [],
+    }
+
+
 def generate_news_impact(title: str, sentiment: str) -> str:
     prompt = PROMPT_IMPACTO.format(title=title[:200], sentiment=sentiment)
     try:
