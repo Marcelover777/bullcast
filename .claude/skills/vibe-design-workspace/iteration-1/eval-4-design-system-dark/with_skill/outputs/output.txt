@@ -1,2 +1,0 @@
-# Output pending - run Skill Creator eval cycle
-Prompt: Crie um design system dark mode completo com tokens para um app React
