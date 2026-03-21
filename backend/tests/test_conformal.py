@@ -20,7 +20,6 @@ class TestConformalPrediction:
         n_test = 1000
         true_noise = np.random.normal(0, 5, n_cal + n_test)
 
-        # Calibration residuals
         cal_residuals = true_noise[:n_cal]
 
         covered = 0
@@ -35,17 +34,14 @@ class TestConformalPrediction:
         assert 0.85 <= coverage <= 0.95, f"Coverage {coverage:.2%} outside [85%, 95%]"
 
     def test_cold_start_fallback(self):
-        """With < 90 residuals, should use TFT quantiles."""
+        """With < 90 residuals, should use +-3% heuristic."""
         from ml_models.conformal import get_interval
         short_residuals = np.random.normal(0, 3, 30)  # too few
-        tft_q05 = 290.0
-        tft_q95 = 310.0
 
         lower, upper = get_interval(
             residuals=short_residuals,
             prediction=300.0,
-            tft_quantile_05=tft_q05,
-            tft_quantile_95=tft_q95,
         )
-        assert lower == tft_q05
-        assert upper == tft_q95
+        # +-3% of 300 = 291, 309
+        assert lower == 291.0
+        assert upper == 309.0

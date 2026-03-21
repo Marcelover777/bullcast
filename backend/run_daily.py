@@ -14,7 +14,6 @@ Ordem de execução:
 """
 import logging
 import os
-import sys
 from datetime import date
 
 logging.basicConfig(
@@ -105,8 +104,8 @@ def run():
 
     # ── 3. ML Ensemble ─────────────────────────────────────
     try:
-        from ml_models.ensemble import run_ensemble
-        run_ensemble()
+        from ml_models.ensemble import run_pipeline
+        run_pipeline()
         logger.info("✓ ML Ensemble")
     except Exception as exc:
         logger.error("✗ ML Ensemble: %s", exc)
@@ -144,66 +143,37 @@ def run():
     # generate_signal() apenas retorna o dict sem persistir.
     texts = {"recommendation_text": "Análise em andamento.", "explanation_text": "",
              "trend_text": "", "duration_text": ""}
-    use_v2 = os.environ.get("USE_ML_V2", "false").lower() == "true"
 
-    if use_v2:
-        try:
-            from claude_integration import generate_signal_texts_v2
-            # Build full analyst context
-            analyst_context = {
-                "price_current": float(signal_row.get("price_current", 0)),
-                "predictions": {
-                    "5d": float(signal_row.get("price_pred_5d") or 0),
-                    "15d": float(signal_row.get("price_pred_15d") or 0),
-                    "30d": float(signal_row.get("price_pred_30d") or 0),
-                },
-                "confidence_interval_90": {
-                    "15d": [
-                        float(signal_row.get("interval_lower") or 0),
-                        float(signal_row.get("interval_upper") or 0),
-                    ]
-                },
-                "signal": signal_row.get("signal", "HOLD"),
-                "signal_confidence": float(signal_row.get("confidence", 0)),
-                "scores": {
-                    "ml": float(signal_row.get("score_ml") or 50),
-                    "technical": float(signal_row.get("score_technical") or 50),
-                    "fundamental": float(signal_row.get("score_fundamental") or 50),
-                    "sentiment": float(signal_row.get("score_sentiment") or 50),
-                    "climate": float(signal_row.get("score_climate") or 50),
-                },
-            }
-            texts = generate_signal_texts_v2(analyst_context)
-            logger.info("✓ Claude Analyst v2 textos gerados")
-        except Exception as exc:
-            logger.error("✗ Claude Analyst v2: %s", exc)
-            errors.append(f"Claude v2: {exc}")
-    else:
-        try:
-            from claude_integration import generate_signal_texts
-            from supabase_client import get_client, upsert
-
-            client = get_client()
-            fi_resp = (client.table("fundamental_indicators")
-                       .select("cycle_phase,seasonal_avg_pct")
-                       .order("date", desc=True)
-                       .limit(1)
-                       .execute())
-            fi = fi_resp.data[0] if fi_resp.data else {}
-
-            texts = generate_signal_texts(
-                signal=signal_row.get("signal", "HOLD"),
-                confidence=float(signal_row.get("confidence", 0)),
-                price=float(signal_row.get("price_current", 0)),
-                pred_15d=float(signal_row.get("price_pred_15d") or 0),
-                cycle_phase=fi.get("cycle_phase", "NEUTRO"),
-                seasonal_pct=float(fi.get("seasonal_avg_pct") or 0),
-                volatility=circuit_level,
-            )
-            logger.info("✓ Claude API textos gerados")
-        except Exception as exc:
-            logger.error("✗ Claude API: %s", exc)
-            errors.append(f"Claude: {exc}")
+    try:
+        from claude_integration import generate_signal_texts_v2
+        analyst_context = {
+            "price_current": float(signal_row.get("price_current", 0)),
+            "predictions": {
+                "5d": float(signal_row.get("price_pred_5d") or 0),
+                "15d": float(signal_row.get("price_pred_15d") or 0),
+                "30d": float(signal_row.get("price_pred_30d") or 0),
+            },
+            "confidence_interval_90": {
+                "15d": [
+                    float(signal_row.get("interval_lower") or 0),
+                    float(signal_row.get("interval_upper") or 0),
+                ]
+            },
+            "signal": signal_row.get("signal", "HOLD"),
+            "signal_confidence": float(signal_row.get("confidence", 0)),
+            "scores": {
+                "ml": float(signal_row.get("score_ml") or 50),
+                "technical": float(signal_row.get("score_technical") or 50),
+                "fundamental": float(signal_row.get("score_fundamental") or 50),
+                "sentiment": float(signal_row.get("score_sentiment") or 50),
+                "climate": float(signal_row.get("score_climate") or 50),
+            },
+        }
+        texts = generate_signal_texts_v2(analyst_context)
+        logger.info("✓ Claude Analyst textos gerados")
+    except Exception as exc:
+        logger.error("✗ Claude Analyst: %s", exc)
+        errors.append(f"Claude: {exc}")
 
     # Upsert único — após circuit_breaker E Claude (evita double-write / race condition)
     try:

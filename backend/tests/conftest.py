@@ -1,5 +1,29 @@
 # backend/tests/conftest.py
 """Shared fixtures for ML v2 tests."""
+import sys
+import types
+from unittest.mock import MagicMock
+
+# ── Stub supabase and its deep dependency tree BEFORE any project imports ──
+# This avoids the need to install supabase + postgrest + realtime + pyiceberg
+# just to run tests that mock everything anyway.
+_SUPABASE_STUBS = [
+    "supabase", "supabase.client", "supabase.lib",
+    "postgrest", "gotrue", "realtime", "storage3", "supafunc",
+    "dotenv",
+]
+for _mod_name in _SUPABASE_STUBS:
+    if _mod_name not in sys.modules:
+        _m = types.ModuleType(_mod_name)
+        # supabase needs create_client and Client
+        if _mod_name == "supabase":
+            _m.create_client = MagicMock()
+            _m.Client = MagicMock
+        # dotenv needs load_dotenv
+        if _mod_name == "dotenv":
+            _m.load_dotenv = lambda *a, **kw: None
+        sys.modules[_mod_name] = _m
+
 import numpy as np
 import pandas as pd
 import pytest
